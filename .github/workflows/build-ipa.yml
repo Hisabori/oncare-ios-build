@@ -45,6 +45,13 @@ jobs:
             -resultBundlePath OnCare-tests.xcresult -parallel-testing-enabled NO \
             -skip-testing:OnCareUITests/WidgetGalleryTests \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO | tee ios-tests.log
+      - name: Preserve app screens before restarting
+        run: |
+          mkdir -p ios-screenshots
+          CONTAINER=$(xcrun simctl get_app_container "$SIM_ID" app.oncare.tests.ui.xctrunner data 2>/dev/null || true)
+          if [ -n "$CONTAINER" ]; then
+            find "$CONTAINER/Documents" -name '*.png' -exec cp {} ios-screenshots/ \;
+          fi
       - name: Restart simulator for the system widget check
         run: |
           xcrun simctl shutdown "$SIM_ID"
