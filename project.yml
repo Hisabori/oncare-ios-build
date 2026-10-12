@@ -1,0 +1,117 @@
+name: OnCare
+options:
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    CODE_SIGNING_ALLOWED: "NO"
+    CODE_SIGNING_REQUIRED: "NO"
+targets:
+  OnCare:
+    type: application
+    platform: iOS
+    sources:
+      - path: OnCare
+      - path: Shared
+    info:
+      path: OnCare/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSSupportsLiveActivities: true
+        CFBundleURLTypes:
+          - CFBundleURLName: app.oncare.personal.navigation
+            CFBundleTypeRole: Editor
+            CFBundleURLSchemes: [oncare]
+        UIApplicationShortcutItems:
+          - UIApplicationShortcutItemType: app.oncare.open.sleep
+            UIApplicationShortcutItemTitle: 수면 루틴
+            UIApplicationShortcutItemIconSymbolName: moon.zzz.fill
+          - UIApplicationShortcutItemType: app.oncare.open.workout
+            UIApplicationShortcutItemTitle: 운동 타이머
+            UIApplicationShortcutItemIconSymbolName: figure.walk
+          - UIApplicationShortcutItemType: app.oncare.open.mood
+            UIApplicationShortcutItemTitle: 마음 기록
+            UIApplicationShortcutItemIconSymbolName: heart.text.square.fill
+          - UIApplicationShortcutItemType: app.oncare.open.connect
+            UIApplicationShortcutItemTitle: 건강 연결
+            UIApplicationShortcutItemIconSymbolName: arrow.triangle.2.circlepath
+        NSCameraUsageDescription: Android 온케어의 연결 QR을 읽을 때만 카메라를 사용합니다.
+        NSLocalNetworkUsageDescription: 같은 Wi-Fi의 내 Android 온케어에서 건강 기록을 안전하게 가져옵니다.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.oncare.personal
+        PRODUCT_NAME: OnCare
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "3.8.0"
+        CURRENT_PROJECT_VERSION: "12"
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: "온케어 3"
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.healthcare-fitness"
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: "YES"
+        INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
+        INFOPLIST_KEY_NSSupportsLiveActivities: "YES"
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "같은 Wi-Fi의 내 Android 온케어에서 건강 기록을 안전하게 가져옵니다."
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+    dependencies:
+      - target: OnCareLive
+        embed: true
+  OnCareLive:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.2"
+    sources: [OnCareLive, Shared]
+    info:
+      path: OnCareLive/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.oncare.personal.live
+        MARKETING_VERSION: "3.8.0"
+        CURRENT_PROJECT_VERSION: "12"
+        GENERATE_INFOPLIST_FILE: "YES"
+        APPLICATION_EXTENSION_API_ONLY: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: "온케어 위젯"
+  OnCareTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [OnCareTests]
+    dependencies:
+      - target: OnCare
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        PRODUCT_BUNDLE_IDENTIFIER: app.oncare.tests.unit
+  OnCareUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [OnCareUITests]
+    dependencies:
+      - target: OnCare
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        PRODUCT_BUNDLE_IDENTIFIER: app.oncare.tests.ui
+schemes:
+  OnCare:
+    build:
+      targets:
+        OnCare: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+    test:
+      targets:
+        - OnCareTests
+        - OnCareUITests
+
