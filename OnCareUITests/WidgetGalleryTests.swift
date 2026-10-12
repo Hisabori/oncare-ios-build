@@ -10,7 +10,10 @@ final class WidgetGalleryTests: XCTestCase {
         let editHome = springboard.buttons["Edit Home Screen"].firstMatch
         XCTAssertTrue(editHome.waitForExistence(timeout: 5),springboard.debugDescription);editHome.tap()
         let edit = springboard.buttons["Edit"].firstMatch
-        XCTAssertTrue(edit.waitForExistence(timeout: 5),springboard.debugDescription);edit.tap()
+        guard edit.waitForExistence(timeout: 10) else {
+            try XCUIScreen.main.screenshot().pngRepresentation.write(to: FileManager.default.urls(for: .documentDirectory,in: .userDomainMask)[0].appendingPathComponent("22-widget-gallery-failure.png"))
+            XCTFail("Home screen edit menu unavailable after entering edit mode.\n" + springboard.debugDescription); return
+        }; edit.tap()
         let add = springboard.buttons["Add Widget"].firstMatch
         XCTAssertTrue(add.waitForExistence(timeout: 5),springboard.debugDescription);add.tap()
         let search = springboard.searchFields.firstMatch

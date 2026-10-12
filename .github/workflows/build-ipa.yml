@@ -9,7 +9,7 @@ permissions:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Select iOS 26 SDK
@@ -43,7 +43,22 @@ jobs:
           xcodebuild test -project OnCare.xcodeproj -scheme OnCare -configuration Debug \
             -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath simulator-build \
             -resultBundlePath OnCare-tests.xcresult -parallel-testing-enabled NO \
+            -skip-testing:OnCareUITests/WidgetGalleryTests \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO | tee ios-tests.log
+      - name: Restart simulator for the system widget check
+        run: |
+          xcrun simctl shutdown "$SIM_ID"
+          xcrun simctl boot "$SIM_ID"
+          xcrun simctl bootstatus "$SIM_ID" -b
+          xcrun simctl status_bar "$SIM_ID" override --time '9:41' --batteryState charged --batteryLevel 100
+      - name: Verify the iOS system widget gallery
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building -project OnCare.xcodeproj -scheme OnCare -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath simulator-build \
+            -resultBundlePath OnCare-widget-tests.xcresult -parallel-testing-enabled NO \
+            -only-testing:OnCareUITests/WidgetGalleryTests \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO | tee -a ios-tests.log
       - name: Collect actual iPhone screens
         if: always()
         run: |
