@@ -46,7 +46,7 @@ struct HealthRecordsView: View {
                 ForEach(Array(Dictionary(grouping: records, by: \.recordType).keys).sorted(), id: \.self) { key in
                     if let latest = records.first(where: { $0.recordType == key }) {
                         NavigationLink { HealthRecordList(records: records.filter { $0.recordType == key }) } label: {
-                            HStack { VStack(alignment: .leading, spacing: 8) { Text(latest.title).font(.headline); Text(latest.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right") }.careCard()
+                            HStack { VStack(alignment: .leading, spacing: 8) { Text(latest.title).font(.headline); Text(latest.summaryValue).font(.title2.bold()).foregroundStyle(Palette.blue); Text(latest.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right") }.careCard()
                         }.buttonStyle(.plain)
                     }
                 }
@@ -57,19 +57,54 @@ struct HealthRecordsView: View {
 }
 struct HealthRecordList: View {
     let records: [HealthRecord]
-    var body: some View { List(records) { record in NavigationLink { List { Section("원본 기록") { Text((record.category == "의료" ? "가져온 시각: " : "측정 시각: ") + record.date.formatted(date: .complete, time: .shortened)); if record.category == "의료" { Text("실제 진료·검사 날짜는 원문 안에서 확인해요. 의료 문서로 복용 일정이나 처방을 자동 변경하지 않아요.").font(.caption) }; Text(record.title) }; HealthFieldsView(fields: record.fields) }.navigationTitle(record.title) } label: { VStack(alignment: .leading) { Text(record.date.formatted(date: .abbreviated, time: .shortened)); Text(record.title).font(.caption).foregroundStyle(.secondary) } } }.navigationTitle(records.first?.title ?? "측정 기록") }
+    var body: some View { List(records) { record in NavigationLink { List { Section("원본 기록") { Text((record.category == "의료" ? "가져온 시각: " : "측정 시각: ") + record.date.formatted(date: .complete, time: .shortened)); if record.category == "의료" { Text("실제 진료·검사 날짜는 원문 안에서 확인해요. 의료 문서로 복용 일정이나 처방을 자동 변경하지 않아요.").font(.caption) }; Text(record.title) }; HealthFieldsView(fields: record.fields) }.navigationTitle(record.title) } label: { VStack(alignment: .leading) { Text(record.date.formatted(date: .abbreviated, time: .shortened)); Text(record.summaryValue).font(.subheadline.weight(.semibold)).foregroundStyle(Palette.blue) } } }.navigationTitle(records.first?.title ?? "측정 기록") }
 }
 struct HealthFieldsView: View {
     let fields: [String: HealthValue]
-    static let labels = ["systolic": "수축기 혈압", "diastolic": "이완기 혈압", "inMillimetersOfMercury": "mmHg", "inGrams": "g", "inKilograms": "kg", "inMeters": "m", "inMetersPerSecond": "m/s", "inCelsius": "℃", "inWatts": "W", "inCalories": "cal", "inKilocalories": "kcal", "inLiters": "L", "beatsPerMinute": "심박 · bpm", "samples": "시간별 측정값", "metadata": "기록 출처", "device": "측정 기기", "manufacturer": "제조사", "model": "모델", "dataOrigin": "원본 앱", "packageName": "앱 이름", "time": "측정 시각", "startTime": "시작 시각", "endTime": "종료 시각", "stages": "수면 단계", "percentage": "%", "count": "개수", "rate": "호흡 · 회/분", "heartRateVariabilityMillis": "심박 변이도 · ms"]
+    static let labels = ["capturedAt": "가져온 시각", "fhir": "의료 원문", "fhirVersion": "문서 규격", "dataSourceId": "의료 자료 출처", "protein": "단백질", "totalCarbohydrate": "탄수화물", "totalFat": "지방", "saturatedFat": "포화 지방", "unsaturatedFat": "불포화 지방", "dietaryFiber": "식이 섬유", "sugar": "당류", "caffeine": "카페인", "sodium": "나트륨", "potassium": "칼륨", "calcium": "칼슘", "iron": "철", "magnesium": "마그네슘", "cholesterol": "콜레스테롤", "energy": "열량", "energyFromFat": "지방 열량", "mealName": "식사 이름", "mealType": "식사 유형 · 원본 코드", "baseline": "기준 피부 온도", "deltas": "피부 온도 변화", "route": "동의한 운동 경로", "segments": "운동 구간", "laps": "운동 랩", "duration": "기간 · ms", "startZoneOffset": "시작 시차 · 초", "endZoneOffset": "종료 시차 · 초", "zoneOffset": "시차 · 초", "systolic": "수축기 혈압", "diastolic": "이완기 혈압", "inMillimetersOfMercury": "mmHg", "inGrams": "g", "inKilograms": "kg", "inMeters": "m", "inMetersPerSecond": "m/s", "inCelsius": "℃", "inWatts": "W", "inCalories": "cal", "inKilocalories": "kcal", "inLiters": "L", "beatsPerMinute": "심박 · bpm", "samples": "시간별 측정값", "metadata": "기록 출처", "device": "측정 기기", "manufacturer": "제조사", "model": "모델", "dataOrigin": "원본 앱", "packageName": "앱 이름", "time": "측정 시각", "startTime": "시작 시각", "endTime": "종료 시각", "stages": "수면 단계", "percentage": "%", "count": "개수", "rate": "호흡 · 회/분", "heartRateVariabilityMillis": "심박 변이도 · ms"]
     var body: some View { ForEach(fields.keys.sorted(), id: \.self) { key in if let value = fields[key] { row(key, value) } } }
     @ViewBuilder private func row(_ key: String, _ value: HealthValue) -> some View {
         let label = Self.labels[key] ?? key
         switch value {
         case .object(let object): DisclosureGroup(label) { HealthFieldsView(fields: object) }
         case .array(let array): DisclosureGroup(label + " · \(array.count)개") { ForEach(Array(array.prefix(100).enumerated()), id: \.offset) { item in if case .object(let object) = item.element { DisclosureGroup("측정 \(item.offset + 1)") { HealthFieldsView(fields: object) } } else { Text(item.element.display) } }; if array.count > 100 { Text("화면은 첫 100개를 표시해요. 전체 값은 백업에 보존돼요.").font(.caption) } }
-        case .number(let timestamp) where key == "time" || key == "startTime" || key == "endTime" || key == "lastModifiedTime": LabeledContent(label, value: Date(timeIntervalSince1970: timestamp / 1000).formatted(date: .abbreviated, time: .standard))
+        case .number(let timestamp) where key == "time" || key == "startTime" || key == "endTime" || key == "lastModifiedTime" || key == "capturedAt": LabeledContent(label, value: Date(timeIntervalSince1970: timestamp / 1000).formatted(date: .abbreviated, time: .standard))
         default: LabeledContent(label, value: value.display)
         }
+    }
+}
+
+extension HealthRecord {
+    private func scalar(_ value: HealthValue?) -> Double? { if case .number(let n) = value { return n }; return nil }
+    private func measure(_ key: String, _ unit: String? = nil) -> Double? { guard let value = fields[key] else { return nil }; if let unit, case .object(let object) = value { return scalar(object[unit]) }; return scalar(value) }
+    private func metric(_ key: String, _ property: String? = nil, factor: Double = 1, unit: String) -> String? { measure(key, property).map { number($0 * factor) + " " + unit } }
+    var summaryValue: String {
+        if category == "의료" { return "원본 의료 문서" }
+        if recordType == "BloodPressureRecord", let systolic = measure("systolic", "inMillimetersOfMercury"), let diastolic = measure("diastolic", "inMillimetersOfMercury") { return number(systolic) + " / " + number(diastolic) + " mmHg" }
+        let value: String?
+        switch recordType {
+        case "WeightRecord": value = metric("weight", "inGrams", factor: 0.001, unit: "kg")
+        case "BodyWaterMassRecord", "BoneMassRecord", "LeanBodyMassRecord": value = metric("mass", "inGrams", factor: 0.001, unit: "kg")
+        case "HeightRecord": value = metric("height", "inMeters", factor: 100, unit: "cm")
+        case "BloodGlucoseRecord": value = metric("level", "inMillimolesPerLiter", unit: "mmol/L")
+        case "BodyTemperatureRecord", "BasalBodyTemperatureRecord": value = metric("temperature", "inCelsius", unit: "℃")
+        case "OxygenSaturationRecord", "BodyFatRecord": value = metric("percentage", "value", unit: "%")
+        case "RestingHeartRateRecord": value = metric("beatsPerMinute", unit: "bpm")
+        case "HeartRateVariabilityRmssdRecord": value = metric("heartRateVariabilityMillis", unit: "ms")
+        case "RespiratoryRateRecord": value = metric("rate", unit: "회/분")
+        case "DistanceRecord": value = metric("distance", "inMeters", factor: 0.001, unit: "km")
+        case "ElevationGainedRecord": value = metric("elevation", "inMeters", unit: "m")
+        case "FloorsClimbedRecord": value = metric("floors", unit: "층")
+        case "StepsRecord": value = metric("count", unit: "걸음")
+        case "WheelchairPushesRecord": value = metric("count", unit: "회")
+        case "ActiveCaloriesBurnedRecord", "TotalCaloriesBurnedRecord", "NutritionRecord": value = metric("energy", "inCalories", factor: 0.001, unit: "kcal")
+        case "HydrationRecord": value = metric("volume", "inLiters", factor: 1000, unit: "ml")
+        case "BasalMetabolicRateRecord": value = metric("basalMetabolicRate", "inWatts", unit: "W")
+        case "Vo2MaxRecord": value = metric("vo2MillilitersPerMinuteKilogram", unit: "ml/kg/min")
+        case "HeartRateRecord":
+            if case .array(let samples) = fields["samples"] { let latest = samples.compactMap { sample -> [String: HealthValue]? in if case .object(let object) = sample { return object }; return nil }.max { (scalar($0["time"]) ?? 0) < (scalar($1["time"]) ?? 0) }; value = latest.flatMap { scalar($0["beatsPerMinute"]) }.map { "최근 샘플 " + number($0) + " bpm" } } else { value = nil }
+        default: value = nil
+        }
+        return value ?? "원본 상세 보기"
     }
 }
