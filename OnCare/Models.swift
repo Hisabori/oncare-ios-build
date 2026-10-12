@@ -64,11 +64,16 @@ struct CareBackup: Codable {
     var version: Int = 3
     var exportedAt: Double? = Date().timeIntervalSince1970 * 1000
     var entries: [Entry]
+    var healthRecords: [HealthRecord]? = nil
+    var healthAvailability: [HealthAvailability]? = nil
     var goals: CareGoals? = nil
     var routines: [Routine]? = nil
     var checks: [String: [String: Bool]]? = nil
     func validate(now: Date = Date()) throws {
-        guard (1...3).contains(version), entries.count <= 20000 else { throw CareError.invalid }
+        guard (1...4).contains(version), entries.count <= 20000 else { throw CareError.invalid }
+        guard (healthRecords?.count ?? 0) <= 10000 else { throw CareError.invalid }
+        guard (healthAvailability?.count ?? 0) <= HealthRecord.types.count else { throw CareError.invalid }; var availabilityIDs = Set<String>(); for item in healthAvailability ?? [] { try item.validate(); guard availabilityIDs.insert(item.id).inserted else { throw CareError.invalid } }
+        var healthIDs = Set<String>(); for record in healthRecords ?? [] { try record.validate(now: now); guard healthIDs.insert(record.id).inserted else { throw CareError.invalid } }
         var ids = Set<String>()
         for e in entries {
             let maximum: Double = e.kind == "마음" ? 5 : e.kind == "체중" ? 500 : e.kind == "운동" ? 1440 : e.kind == "수면" ? 24 : e.kind == "걸음" ? 1000000 : 20000
@@ -117,7 +122,7 @@ struct CareBackup: Codable {
     }
     func encoded() throws -> Data {
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .millisecondsSince1970; encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        return try encoder.encode(self)
+        var backup = self; if healthRecords != nil || healthAvailability != nil { backup.version = 4 }; return try encoder.encode(backup)
     }
 }
 
@@ -157,13 +162,13 @@ struct CareBackup: Codable {
         guard readable else { notice = "원본 기록을 읽지 못해 저장할 수 없어요."; return false }
         do {
             try next.validate()
-            try next.encoded().write(to: url, options: [.atomic, .completeFileProtection])
+            let data = try next.encoded(); guard data.count <= 5 * 1024 * 1024 else { throw CareError.invalid }; try data.write(to: url, options: [.atomic, .completeFileProtection])
             state = next; state.entries.sort { $0.date > $1.date }; return true
         } catch { notice = "저장하지 못했어요. 입력값과 저장 공간을 확인해주세요."; return false }
     }
     @discardableResult func save(_ entry: Entry) -> Bool { var next = state; next.entries.removeAll { $0.id == entry.id }; next.entries.append(entry); return persist(next) }
     func remove(_ id: String) { var next = state; next.entries.removeAll { $0.id == id }; persist(next) }
-    func clear() { var next = state; next.entries = []; persist(next) }
+    func clear() { var next = state; next.entries = []; next.healthRecords = []; next.healthAvailability = []; persist(next) }
     @discardableResult func setGoals(_ goals: CareGoals) -> Bool { var next = state; next.goals = goals; return persist(next) }
     @discardableResult func addRoutine(_ title: String) -> Bool {
         let title = title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -179,6 +184,7 @@ struct CareBackup: Codable {
     @discardableResult func merge(_ backup: CareBackup) -> Bool {
         do { try backup.validate() } catch { notice = "백업 형식이 맞지 않아요. 기존 기록은 그대로예요."; return false }
         var next = state; let known = Set(entries.map(\.id)); next.entries += backup.entries.filter { !known.contains($0.id) }
+        if let records = backup.healthRecords { let known = Set((next.healthRecords ?? []).map(\.id)); next.healthRecords = (next.healthRecords ?? []) + records.filter { !known.contains($0.id) } }
         if let goals = backup.goals { next.goals = goals }
         if let routines = backup.routines { next.routines = routines; next.checks = backup.checks }
         return persist(next)

@@ -159,8 +159,10 @@ struct BodyView: View {
                     Text("내 몸의 변화를 차근차근").font(.largeTitle.bold())
                     CareButton(title: "실천 센터 · 운동 시작하기", color: Palette.teal, id: "body-practice-open") { sheet = .practice }
                     Picker("기간", selection: $range) { ForEach([7,30,90], id: \.self) { Text("\($0)일").tag($0) } }.pickerStyle(.segmented)
+                    NavigationLink { HealthRecordsView() } label: { Label("연결된 건강 정보 · 항목별 보기", systemImage: "heart.text.square.fill").font(.headline).frame(maxWidth: .infinity, alignment: .leading).careCard() }.buttonStyle(.plain).accessibilityIdentifier("health-records-open")
                     weightCard
                     VStack(alignment: .leading, spacing: 12) { Label("오늘의 걸음", systemImage: "figure.walk").font(.headline).foregroundStyle(Palette.teal); Text(number(journal.sum("걸음", from: dayOffset(0))) + " 걸음").font(.title2.bold()); CareButton(title: "Android 건강 연결", id: "body-sync-open") { sheet = .healthConnection } }.careCard()
+                    SleepInsightsView(entries: journal.entries, goal: journal.goals.sleep, now: Date())
                     SectionTitle(title: "이번 주 움직임")
                     exerciseCard
                     SectionTitle(title: "기본 습관도 놓치지 않게")

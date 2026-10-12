@@ -46,11 +46,12 @@ struct SleepInsightsView: View {
                     if let device = analysis.deviceName { Text("기기: " + device).font(.caption).foregroundStyle(.secondary) }
                     if let method = analysis.recordingMethodLabel { Text("기록 방식: " + method).font(.caption).foregroundStyle(.secondary) }
                     if analysis.hasStages {
+                        SleepStageChart(entry: entry)
                         stageTimeline(entry)
                         ForEach([SleepStageType.awake, .light, .deep, .rem, .sleeping], id: \.rawValue) { type in
                             let minutes = analysis.minutes(for: type)
-                            if minutes > 0 {
-                                HStack { Circle().fill(color(type)).frame(width: 9, height: 9); Text(label(type)); Spacer(); Text(number(minutes) + "분") }.font(.subheadline)
+                            if type != .sleeping || minutes > 0 {
+                                HStack { Circle().fill(color(type)).frame(width: 9, height: 9); Text(label(type)); Spacer(); Text(minutes > 0 ? number(minutes) + "분" : "제공 없음") }.font(.subheadline)
                             }
                         }
                         HStack { Text("미분류·단계 없는 구간"); Spacer(); Text(number(analysis.unclassifiedMinutes) + "분") }.font(.caption).foregroundStyle(.secondary)

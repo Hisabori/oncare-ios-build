@@ -55,13 +55,17 @@ struct HealthSnapshot: Codable {
     var windowStart: Date
     var kinds: [String]
     var entries: [Entry]
+    var healthRecords: [HealthRecord]? = nil
+    var availability: [HealthAvailability]? = nil
     func validate(pair: SyncPair, now: Date = Date()) throws {
         guard version == 1, peer == pair.peer,
               abs(generatedAt.timeIntervalSince(now)) < 180,
               windowStart <= generatedAt, generatedAt.timeIntervalSince(windowStart) <= 31 * 86400,
-              !kinds.isEmpty, Set(kinds).count == kinds.count, Set(kinds).isSubset(of: ["체중", "운동", "수면", "물", "걸음"]),
+              !kinds.isEmpty, Set(kinds).count == kinds.count, Set(kinds).isSubset(of: Set(["체중", "운동", "수면", "물", "걸음"] + HealthRecord.types.map { "health:" + $0 })),
               entries.allSatisfy({ kinds.contains($0.kind) && $0.id.hasPrefix("hc:") && $0.date >= windowStart && $0.date <= generatedAt && $0.source == nil }) else { throw CareError.invalid }
-        try CareBackup(entries: entries).validate(now: now)
+        try CareBackup(entries: entries, healthRecords: healthRecords, healthAvailability: availability).validate(now: now)
+        guard (healthRecords ?? []).allSatisfy({ kinds.contains("health:" + $0.recordType) && $0.date >= windowStart && $0.date <= generatedAt && $0.source == nil }), (availability?.count ?? 0) <= HealthRecord.types.count else { throw CareError.invalid }
+        for item in availability ?? [] { guard HealthRecord.types.contains(item.recordType), item.title.count <= 100, item.count >= 0, item.count <= 10000, ["ready", "empty", "permission", "unsupported", "error"].contains(item.status) else { throw CareError.invalid } }
     }
 }
 extension Journal {
@@ -78,8 +82,15 @@ extension Journal {
         next.entries.removeAll { $0.source == source && snapshot.kinds.contains($0.kind) && $0.date >= snapshot.windowStart }
         let ids = Set(records.map(\.id)); next.entries.removeAll { ids.contains($0.id) }
         next.entries += records
+        if let incoming = snapshot.healthRecords {
+            var archive = next.healthRecords ?? []
+            archive.removeAll { $0.source == source && snapshot.kinds.contains("health:" + $0.recordType) && ($0.category == "의료" || $0.date >= snapshot.windowStart) }
+            let imported = incoming.map { raw -> HealthRecord in var record = raw; record.id = "hc:" + SHA256.hash(data: Data((pair.peer + "|" + raw.id).utf8)).map { String(format: "%02x", $0) }.joined(); record.source = source; return record }
+            let ids = Set(imported.map(\.id)); archive.removeAll { ids.contains($0.id) }; archive += imported; next.healthRecords = archive
+            next.healthAvailability = snapshot.availability
+        }
         guard persist(next) else { throw CareError.unreadable }
-        return records.count
+        return records.count + (snapshot.healthRecords?.count ?? 0)
     }
 }
 final class PinnedSyncDelegate: NSObject, URLSessionDelegate, URLSessionTaskDelegate, @unchecked Sendable {
@@ -130,7 +141,7 @@ final class PinnedSyncDelegate: NSObject, URLSessionDelegate, URLSessionTaskDele
             let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .millisecondsSince1970
             let snapshot = try decoder.decode(HealthSnapshot.self, from: data)
             let count = try journal.applyHealth(snapshot, pair: pair)
-            lastSync = Date(); status = "\(count)개 건강 기록 최신 상태 · 중복 없이 갱신"
+            lastSync = Date(); let errors = (snapshot.availability ?? []).filter { $0.status == "error" }.count; status = "\(count)개 건강 기록 갱신" + (errors > 0 ? " · \(errors)개 항목 원본 읽기 확인 필요" : " · 중복 없이 갱신")
             if liveStatus { await CareLiveStatus.update(message: "건강 기록 최신 상태", count: count, syncing: false) }
         } catch {
             guard epoch == generation else { return }
@@ -180,7 +191,7 @@ struct HealthConnectionView: View {
                     Text("지원 기기와 실시간 현황 허용 설정에서 표시돼요. 건강 수치와 메모는 표시하지 않아요. 앱을 닫으면 자동 동기화는 멈춰요.").font(.caption).foregroundStyle(.secondary)
                 }
                 Section {
-                    Text("체중·운동·수면·수분·걸음 중 허용된 기록을 가져와요. Android 14 이상이 필요하며, Google Health 등에서 Health Connect 공유를 켜야 해요. 원본에서 수정·삭제한 최근 기록은 다음 연결 때 반영해요. 직접 입력한 기록은 유지돼요.").font(.caption)
+                    Text("지원되는 건강·운동 42종과 의료 문서 12종 중 허용된 기록을 가져와요. 생체·체성분·영양·주기 정보는 건강 탭의 연결된 건강 정보에서 확인해요. 의료 문서는 지원 Android에서 별도 권한으로 읽으며 문서 원문을 보존해요. 운동 경로는 세션별 동의가 필요해요. Android 14 이상이 필요하며, Google Health 등에서 Health Connect 공유를 켜야 해요. 원본에서 수정·삭제한 최근 기록은 다음 연결 때 반영해요. 직접 입력한 기록은 유지돼요.").font(.caption)
                     Text("Wi-Fi 주소가 바뀌면 Android의 연결 코드를 다시 등록하세요. 연결 코드는 암호 키처럼 내 기기에만 전달하세요.").font(.caption)
                     Button("연결 해제", role: .destructive) { disconnecting = true }.disabled(sync.pair == nil).accessibilityIdentifier("sync-disconnect")
                 }

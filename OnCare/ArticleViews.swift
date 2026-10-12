@@ -74,7 +74,7 @@ struct ArticleLibraryView: View {
                     ForEach(recommendations) { recommendation in
                         Button { selected = recommendation.article } label: { ArticleTile(recommendation: recommendation) }.buttonStyle(.plain).accessibilityIdentifier("article-" + recommendation.id)
                     }
-                    Text("공공 의료기관 NHS 자료를 온케어가 한국어로 정리한 4편의 큐레이션이에요. 원문은 영어이며, 일반적인 건강 정보입니다. 자동으로 최신 글을 가져오지는 않아요.").font(.caption).foregroundStyle(.secondary)
+                    Text("공공 의료기관 NHS 자료를 온케어가 한국어로 정리한 \(HealthArticle.catalog.count)편의 큐레이션이에요. 원문은 영어이며, 일반적인 건강 정보입니다. 자동으로 최신 글을 가져오지는 않아요.").font(.caption).foregroundStyle(.secondary)
                 }.padding(22)
             }.background(Color(.systemGroupedBackground)).navigationTitle("읽을거리").navigationBarTitleDisplayMode(.inline)
                 .searchable(text: $search, prompt: "주제나 제목 검색")

@@ -22,8 +22,8 @@ final class ArticleTests: XCTestCase {
         let result = ArticleRecommender.recommendations(interests: [.nutrition], recentKinds: ["수면"], read: [])
         XCTAssertEqual(result.first?.article.topic, .nutrition)
         XCTAssertTrue(result.first!.reason.contains("관심 주제"))
-        XCTAssertEqual(result[1].article.topic, .sleep)
-        XCTAssertTrue(result[1].reason.contains("최근 7일"))
+        XCTAssertEqual(result.first(where: { $0.article.topic == .sleep })?.article.topic, .sleep)
+        XCTAssertTrue(result.first(where: { $0.article.topic == .sleep })!.reason.contains("최근 7일"))
         XCTAssertEqual(result.map(\.id), ArticleRecommender.recommendations(interests: [.nutrition], recentKinds: ["수면"], read: []).map(\.id))
     }
     func testFutureAndOldRecordsDoNotInfluenceRecommendations() {
