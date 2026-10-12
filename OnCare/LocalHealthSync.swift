@@ -199,7 +199,7 @@ struct HealthConnectionView: View {
     private func connect() {
         hideKeyboard()
         do { try sync.connect(code); code = ""; error = "" }
-        catch { error = "연결 코드 또는 저장 상태를 확인해주세요. Android에서 새 코드를 복사할 수 있어요." }
+        catch { self.error = "연결 코드 또는 저장 상태를 확인해주세요. Android에서 새 코드를 복사할 수 있어요." }
     }
 
 }
