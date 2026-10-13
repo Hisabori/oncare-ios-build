@@ -102,7 +102,7 @@ struct MindView: View {
     @State private var sheet: CareSheet?
     @State private var editing: Entry?
     @State private var moodQuery = ""
-    @State private var moodDays = 7
+    @State private var moodDays = UserDefaults.standard.integer(forKey: "app-mood-days") == 30 ? 30 : 7
     private var diary: [Entry] { journal.entries.filter { $0.kind == "마음" && $0.date >= dayOffset(-(moodDays - 1)) && $0.date <= Date() && (moodQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || $0.note.localizedCaseInsensitiveContains(moodQuery.trimmingCharacters(in: .whitespacesAndNewlines))) }.sorted { $0.date > $1.date } }
     var data: [Entry] { journal.daily("마음", from: dayOffset(-(moodDays - 1))) }
     var body: some View {

@@ -154,3 +154,25 @@ struct HistoryView: View {
         catch { if !isFileSelectionCancelled(error) { journal.notice = "백업을 읽지 못했어요. 기존 기록은 그대로예요." } }
     }
 }
+
+struct AppPreferencesView: View {
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("app-theme") private var theme = "system"
+    @AppStorage("app-start-tab") private var startTab = 0
+    @AppStorage("app-mood-days") private var moodDays = 7
+    @State private var reset = false
+    var body: some View {
+        NavigationStack { Form {
+            Section("화면") {
+                Picker("테마", selection: $theme) { Text("시스템 설정").tag("system"); Text("라이트").tag("light"); Text("다크").tag("dark") }.accessibilityIdentifier("preferences-theme")
+                Picker("앱 시작 화면", selection: $startTab) { Text("오늘").tag(0); Text("마음").tag(1); Text("건강").tag(2); Text("기록").tag(3); Text("읽을거리").tag(4) }.accessibilityIdentifier("preferences-start-tab")
+                Text("시작 화면은 다음 앱 실행부터 적용해요. 바로가기 링크는 요청한 화면을 먼저 엽니다.").font(.caption).foregroundStyle(.secondary)
+            }
+            Section("기록 기본값") { Picker("마음 기록 조회 기간", selection: $moodDays) { Text("7일").tag(7); Text("30일").tag(30) }; Text("마음 화면을 새로 열 때 적용해요.").font(.caption).foregroundStyle(.secondary) }
+            Section("알림과 앱 정보") { NavigationLink("하루 기록 알림") { ReminderEditor() }; Text("온케어 " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") + " · 빌드 " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "")); Text("설정은 이 기기에 저장돼요. 건강 기록·투약 일정·연결 정보를 바꾸지 않습니다.").font(.caption).foregroundStyle(.secondary) }
+            Section { Button("환경설정 기본값으로 복원") { reset = true }.accessibilityIdentifier("preferences-reset") }
+        }.navigationTitle("앱 환경설정").navigationBarTitleDisplayMode(.inline).toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("닫기") { dismiss() } } }
+        .confirmationDialog("환경설정만 기본값으로 복원할까요?", isPresented: $reset, titleVisibility: .visible) { Button("기본값 복원") { theme = "system"; startTab = 0; moodDays = 7 } }
+        }
+    }
+}

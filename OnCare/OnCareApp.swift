@@ -69,7 +69,7 @@ struct TrendChart: View {
     }
 }
 enum CareSheet: String, Identifiable {
-    case intelligence, healthConnection, sleepRoutine, practice, medications, widgetHelp
+    case preferences, intelligence, healthConnection, sleepRoutine, practice, medications, widgetHelp
     case mood = "마음", weight = "체중", exercise = "운동", sleep = "수면", water = "물", goals, routines, report, reminders, breathing
     var id: String { rawValue }
 }
@@ -77,6 +77,7 @@ struct SheetContents: View {
     let sheet: CareSheet
     var body: some View {
         switch sheet {
+        case .preferences: AppPreferencesView()
         case .medications: MedicationView()
         case .widgetHelp: WidgetHelpView()
         case .intelligence: IntelligenceView()
@@ -99,10 +100,11 @@ struct SheetContents: View {
     @StateObject private var articles = ArticleLibrary()
     @StateObject private var journal = Journal()
     @StateObject private var sync = LocalHealthSync()
+    @AppStorage("app-theme") private var theme = "system"
     init() { CareAppShortcuts.updateAppShortcutParameters() }
     var body: some Scene {
         WindowGroup {
-            RootView().environmentObject(journal).environmentObject(sync).environmentObject(shortcuts).environmentObject(articles).environmentObject(medications).tint(Palette.blue).environment(\.locale, Locale(identifier: "ko_KR"))
+            RootView().preferredColorScheme(theme == "dark" ? .dark : theme == "light" ? .light : nil).environmentObject(journal).environmentObject(sync).environmentObject(shortcuts).environmentObject(articles).environmentObject(medications).tint(Palette.blue).environment(\.locale, Locale(identifier: "ko_KR"))
                 .alert("온케어 안내", isPresented: Binding(get: { journal.notice != nil }, set: { if !$0 { journal.notice = nil } })) { Button("확인") { journal.notice = nil } } message: { Text(journal.notice ?? "") }
         }
     }
@@ -111,7 +113,7 @@ struct RootView: View {
     @StateObject private var medicationNavigation = MedicationNavigation.shared
     @EnvironmentObject private var medications: MedicationStore
     @EnvironmentObject private var shortcuts: CareShortcutRouter
-    @State private var selectedTab = 0
+    @State private var selectedTab = min(4, max(0, UserDefaults.standard.integer(forKey: "app-start-tab")))
     @State private var tabIdentity = UUID()
     @State private var shortcutSheet: CareSheet?
     @State private var windowReference = CareWindowReference()
@@ -202,6 +204,7 @@ struct Dashboard: View {
                         CareButton(title: "이번 주 돌아보기", filled: true, id: "report-open") { sheet = .report }
                         CareButton(title: "Android 건강 데이터 연결", id: "health-sync-open") { sheet = .healthConnection }
                         CareButton(title: "위젯 설치 확인", id: "widget-help-open") { sheet = .widgetHelp }
+                        CareButton(title: "앱 환경설정", id: "app-preferences-open") { sheet = .preferences }
                         CareButton(title: "하루 기록 알림 설정", id: "reminders-open") { sheet = .reminders }
                     }.careCard()
                 }.padding(22)
