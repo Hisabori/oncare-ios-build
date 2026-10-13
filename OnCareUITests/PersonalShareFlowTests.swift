@@ -13,7 +13,7 @@ final class PersonalShareFlowTests: XCTestCase {
         try screenshot("25-personal-share-preview")
         app.buttons["돌아가기"].firstMatch.tap(); app.buttons["닫기"].firstMatch.tap()
         for _ in 0..<5 { if app.staticTexts["app-version"].isHittable { break }; app.scrollViews.firstMatch.swipeUp() }
-        XCTAssertTrue(app.staticTexts["app-version"].label.contains("3.9.0 · 빌드 13"))
+        XCTAssertTrue(app.staticTexts["app-version"].label.contains("3.10.0 · 빌드 19"))
         XCUIDevice.shared.system.open(URL(string: "oncare://open/connect")!)
         XCTAssertTrue(app.buttons["sync-qr-scan"].waitForExistence(timeout: 5)); app.buttons["sync-qr-scan"].tap()
         XCTAssertTrue(app.navigationBars["연결 QR 스캔"].waitForExistence(timeout: 5)); try screenshot("26-qr-scanner-fallback")

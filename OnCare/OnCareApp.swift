@@ -165,12 +165,17 @@ struct RootView: View {
 struct Dashboard: View {
     @EnvironmentObject var journal: Journal
     @State private var sheet: CareSheet?
+    @State private var editingPins = false
+    @State private var showingHighlights = false
+    @AppStorage("summary-pins-v1") private var pinned = "걸음,마음,수면"
     var done: Int { ["마음", "체중", "운동", "물"].filter { journal.latest($0, today: true) != nil }.count }
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     VStack(alignment: .leading, spacing: 8) { Text(koreanDate(Date(), weekday: true)).font(.caption.weight(.semibold)).foregroundStyle(.secondary); Text("오늘도, 나답게").font(.largeTitle.bold()); Text("몸과 마음의 이야기를 만나보세요").font(.subheadline).foregroundStyle(.secondary) }
+                    quickLog
+                    pinnedSection
                     hero
                     CareButton(title: "실천 센터 · 운동 타이머와 루틴", color: Palette.teal, id: "practice-open") { sheet = .practice }
                     CareButton(title: "✦ Apple Intelligence로 돌아보기", id: "intelligence-open") { sheet = .intelligence }
@@ -189,6 +194,7 @@ struct Dashboard: View {
                         HStack { MoodFace(score: Int(journal.latest("마음", today: true)?.value ?? 3)); VStack(alignment: .leading, spacing: 5) { Text(journal.latest("마음", today: true).map { moodNames[Int($0.value)-1] } ?? "오늘은 어떤 기분인가요?").font(.headline); Text("잠깐 멈춰, 마음을 살펴보세요").font(.caption).foregroundStyle(.secondary) } }
                         CareButton(title: "마음 체크인", color: Palette.purple, id: "open-mood") { sheet = .mood }
                     }.careCard()
+                    highlightsSection
                     ArticleRecommendationsSection()
                     SectionTitle(title: "기록이 쌓이면, 흐름이 보여요")
                     VStack(alignment: .leading, spacing: 14) {
@@ -199,11 +205,51 @@ struct Dashboard: View {
                         CareButton(title: "하루 기록 알림 설정", id: "reminders-open") { sheet = .reminders }
                     }.careCard()
                 }.padding(22)
-            }.background(Color(.systemGroupedBackground)).navigationTitle("ONCARE").navigationBarTitleDisplayMode(.inline)
+            }.background(summaryBackground).navigationTitle("요약").navigationBarTitleDisplayMode(.large)
                 .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("목표 설정") { sheet = .goals }.font(.subheadline).accessibilityIdentifier("goals-open") } }
                 .sheet(item: $sheet) { SheetContents(sheet: $0) }
+                .sheet(isPresented: $editingPins) { SummaryPinEditor(encoded: $pinned) }
         }
     }
+    private var summaryBackground: some View {
+        ZStack(alignment: .top) { Color(.systemGroupedBackground); LinearGradient(colors: [Palette.purple.opacity(0.38), Palette.coral.opacity(0.18), Color(.systemGroupedBackground).opacity(0)], startPoint: .topLeading, endPoint: .bottomTrailing).frame(height: 390).allowsHitTesting(false) }.ignoresSafeArea()
+    }
+    private var quickLog: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("빠른 기록").font(.title2.bold())
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                quickTile("마음 상태", kind: "마음", icon: "brain.head.profile", selection: .mood, id: "summary-quick-mood")
+                quickTile("수면", kind: "수면", icon: "bed.double.fill", selection: .sleepRoutine, id: "summary-quick-sleep")
+                quickTile("체중", kind: "체중", icon: "scalemass.fill", selection: .weight, id: "summary-quick-weight")
+                quickTile("투약", kind: nil, icon: "pills.fill", selection: .medications, id: "summary-quick-medication")
+            }
+        }
+    }
+    private func quickTile(_ title: String, kind: String?, icon: String, selection: CareSheet, id: String) -> some View {
+        Button { sheet = selection } label: { HStack(spacing: 12) { Image(systemName: icon).font(.title2).foregroundStyle(kind.map(SummaryMetrics.color) ?? Palette.teal); VStack(alignment: .leading, spacing: 5) { Text(title).font(.headline).foregroundStyle(.primary); Text(kind.flatMap { journal.latest($0) }.map { koreanDate($0.date) } ?? (kind == nil ? "복용 일정 확인" : "기록 시작하기")).font(.caption).foregroundStyle(.secondary) }; Spacer(minLength: 0) }.padding(18).frame(maxWidth: .infinity, minHeight: 88).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24)) }.buttonStyle(.plain).accessibilityIdentifier(id)
+    }
+    private var pinnedSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack { Text("고정됨").font(.title2.bold()); Spacer(); Button("편집") { editingPins = true }.accessibilityIdentifier("summary-pins-edit") }
+            ForEach(pinned.split(separator: ",").map(String.init).filter { ["걸음", "마음", "수면", "체중", "운동", "물"].contains($0) }, id: \.self) { kind in
+                SummaryMetricCard(kind: kind) { sheet = summarySheet(kind) }
+            }
+            if pinned.isEmpty { Text("편집에서 요약에 보고 싶은 항목을 골라보세요.").font(.subheadline).foregroundStyle(.secondary).careCard() }
+        }.padding(.top, 8)
+    }
+    private var highlightsSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("하이라이트").font(.title2.bold())
+            SummaryMetricCard(kind: "걸음", highlight: true) { sheet = .healthConnection }
+            if showingHighlights {
+                SummaryMetricCard(kind: "운동", highlight: true) { sheet = .practice }
+                SummaryMetricCard(kind: "수면", highlight: true) { sheet = .sleepRoutine }
+                SummaryMetricCard(kind: "마음", highlight: true) { sheet = .mood }
+            }
+            Button { showingHighlights.toggle() } label: { HStack { Label(showingHighlights ? "하이라이트 접기" : "모든 하이라이트 보기", systemImage: "list.bullet.clipboard"); Spacer(); Image(systemName: "chevron.right") }.padding(20).background(Color(.secondarySystemGroupedBackground), in: Capsule()) }.buttonStyle(.plain).accessibilityIdentifier("summary-highlights-all")
+        }
+    }
+    private func summarySheet(_ kind: String) -> CareSheet { switch kind { case "걸음": return .healthConnection; case "마음": return .mood; case "수면": return .sleepRoutine; case "체중": return .weight; case "운동": return .exercise; default: return .water } }
     var hero: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack { Label("나의 하루 요약", systemImage: "heart.fill").font(.subheadline.weight(.semibold)).foregroundStyle(Palette.coral); Spacer(); Text("오늘").font(.caption).foregroundStyle(.secondary) }

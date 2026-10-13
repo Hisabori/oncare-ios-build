@@ -83,7 +83,7 @@ jobs:
           cp -R build/Build/Products/Release-iphoneos/OnCare.app package/Payload/
           cd package
           zip -qry ../OnCare-unsigned.ipa Payload
-          python3 -c 'import zipfile,plistlib; z=zipfile.ZipFile("../OnCare-unsigned.ipa"); p=plistlib.loads(z.read("Payload/OnCare.app/Info.plist")); assert p["CFBundleIdentifier"]=="app.oncare.personal"; assert p["CFBundleShortVersionString"]=="3.9.0"; assert "Payload/OnCare.app/"+p["CFBundleExecutable"] in z.namelist(); print("PASS: real iPhone IPA structure and version")'
+          python3 -c 'import zipfile,plistlib; z=zipfile.ZipFile("../OnCare-unsigned.ipa"); p=plistlib.loads(z.read("Payload/OnCare.app/Info.plist")); assert p["CFBundleIdentifier"]=="app.oncare.personal"; assert p["CFBundleShortVersionString"]=="3.10.0"; assert "Payload/OnCare.app/"+p["CFBundleExecutable"] in z.namelist(); print("PASS: real iPhone IPA structure and version")'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: OnCare-unsigned-ipa
