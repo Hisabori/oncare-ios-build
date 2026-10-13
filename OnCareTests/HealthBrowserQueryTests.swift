@@ -1,0 +1,7 @@
+import XCTest
+@testable import OnCare
+final class HealthBrowserQueryTests:XCTestCase {
+ func record(_ id:String,_ date:Date)->HealthRecord{HealthRecord(id:id,recordType:"HeartRateRecord",date:date,title:"심박",category:"생체",fields:["metadata":.object(["dataOrigin":.object(["packageName":.text("com.sec.android.app.shealth")]),"device":.object(["model":.text("Galaxy Watch")])])])}
+ func testSourceSearchAndDateFilterExcludeFuture(){let now=Date();let records=[record("hc:new",now.addingTimeInterval(-60)),record("hc:old",dayOffset(-40,from:now)),record("hc:future",now.addingTimeInterval(60))];XCTAssertEqual(HealthBrowserQuery.filtered(records,category:"전체",days:7,query:"watch",favorites:[],onlyFavorites:false,now:now).map(\.id),["hc:new"]);XCTAssertEqual(HealthBrowserQuery.filtered(records,category:"전체",days:0,query:"삼성",favorites:[],onlyFavorites:false,now:now).count,2)}
+ func testFavoritesAndCategoryDoNotChangeRecords(){let records=[record("hc:new",Date().addingTimeInterval(-60))];XCTAssertEqual(HealthBrowserQuery.filtered(records,category:"생체",days:0,query:"",favorites:["HeartRateRecord"],onlyFavorites:true).count,1);XCTAssertTrue(HealthBrowserQuery.filtered(records,category:"활동",days:0,query:"",favorites:["HeartRateRecord"],onlyFavorites:true).isEmpty);XCTAssertTrue(HealthBrowserQuery.filtered(records,category:"전체",days:0,query:"",favorites:[],onlyFavorites:true).isEmpty);XCTAssertEqual(records[0].title,"심박")}
+}

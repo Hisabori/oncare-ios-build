@@ -31,28 +31,56 @@ struct HealthAvailability: Codable, Identifiable {
     func validate() throws { guard HealthRecord.types.contains(recordType), !title.isEmpty, title.count <= 100, ["활동", "신체", "생체", "영양", "주기", "수면", "마음", "의료"].contains(category), ["ready", "empty", "permission", "unsupported", "error"].contains(status), (0...10000).contains(count), status == "ready" || count == 0 else { throw CareError.invalid } }
     var statusTitle: String { switch status { case "ready": return "기록 \(count)개"; case "empty": return "최근 기록 없음"; case "permission": return "읽기 권한 필요"; case "unsupported": return "기기에서 지원 안 됨"; default: return "원본 읽기 확인 필요" } }
 }
+enum HealthBrowserQuery {
+    static func source(_ record: HealthRecord) -> String {
+        var values = [record.source ?? ""]
+        if case .object(let metadata)? = record.fields["metadata"] {
+            if case .object(let origin)? = metadata["dataOrigin"], case .text(let app)? = origin["packageName"] { values.append(app == "com.sec.android.app.shealth" ? "삼성 헬스 · " + app : app) }
+            if case .object(let device)? = metadata["device"] { for key in ["manufacturer", "model"] { if case .text(let value)? = device[key] { values.append(value) } } }
+        }
+        return values.filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+    static func filtered(_ records: [HealthRecord], category: String, days: Int, query: String, favorites: Set<String>, onlyFavorites: Bool, now: Date = Date()) -> [HealthRecord] {
+        let start = days > 0 ? dayOffset(1 - days, from: now) : Date(timeIntervalSince1970: 0)
+        let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return records.filter { record in record.date >= start && record.date <= now && (category == "전체" || record.category == category) && (!onlyFavorites || favorites.contains(record.recordType)) && (needle.isEmpty || (record.title + " " + record.category + " " + source(record)).localizedCaseInsensitiveContains(needle)) }.sorted { $0.date == $1.date ? $0.id > $1.id : $0.date > $1.date }
+    }
+}
 struct HealthRecordsView: View {
     @EnvironmentObject var journal: Journal
     @State private var category = "전체"
     @State private var search = ""
-    private var records: [HealthRecord] { (journal.state.healthRecords ?? []).filter { (category == "전체" || $0.category == category) && (search.isEmpty || $0.title.localizedCaseInsensitiveContains(search)) }.sorted { $0.date > $1.date } }
+    @State private var days = 0
+    @State private var onlyFavorites = false
+    @AppStorage("health-favorites-v1") private var encodedFavorites = ""
+    private var favorites: Set<String> { Set(encodedFavorites.split(separator: ",").map(String.init)).intersection(HealthRecord.types) }
+    private var records: [HealthRecord] { HealthBrowserQuery.filtered(journal.state.healthRecords ?? [], category: category, days: days, query: search, favorites: favorites, onlyFavorites: onlyFavorites) }
+    private var types: [String] { let grouped = Dictionary(grouping: records, by: \.recordType); return grouped.keys.sorted { a, b in if favorites.contains(a) != favorites.contains(b) { return favorites.contains(a) }; return (grouped[a]?.first?.title ?? a) < (grouped[b]?.first?.title ?? b) } }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 Text("연결된 건강 정보").font(.largeTitle.bold())
-                Text("원본의 측정값과 기록 출처를 함께 확인해요. 같은 항목의 여러 앱 기록은 각각 표시되며 합계로 더하지 않아요.").font(.subheadline).foregroundStyle(.secondary)
+                Text("원본의 측정값과 출처를 함께 확인해요. 여러 앱의 같은 기록을 합계로 더하지 않아요.").font(.subheadline).foregroundStyle(.secondary)
                 ScrollView(.horizontal, showsIndicators: false) { HStack { ForEach(["전체", "생체", "활동", "신체", "영양", "수면", "주기", "마음", "의료"], id: \.self) { item in Button(item) { category = item }.buttonStyle(.bordered).tint(category == item ? Palette.blue : .gray) } } }
-                if records.isEmpty { Label("표시할 기록이 없어요. Android에서 권한과 원본 데이터 공유를 확인해주세요.", systemImage: "heart.text.square").careCard() }
-                ForEach(Array(Dictionary(grouping: records, by: \.recordType).keys).sorted(), id: \.self) { key in
-                    if let latest = records.first(where: { $0.recordType == key }) {
-                        NavigationLink { HealthRecordList(records: records.filter { $0.recordType == key }) } label: {
-                            HStack { VStack(alignment: .leading, spacing: 8) { Text(latest.title).font(.headline); Text(latest.summaryValue).font(.title2.bold()).foregroundStyle(Palette.blue); Text(latest.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right") }.careCard()
-                        }.buttonStyle(.plain)
+                Picker("조회 기간", selection: $days) { Text("전체").tag(0); Text("7일").tag(7); Text("30일").tag(30) }.pickerStyle(.segmented).accessibilityIdentifier("health-period-filter")
+                Toggle("즐겨찾기만 보기", isOn: $onlyFavorites).accessibilityIdentifier("health-favorites-only")
+                if records.isEmpty { Label("표시할 기록이 없어요. Android에서 권한과 원본 데이터 공유를 확인해주세요.", systemImage: "heart.text.square").careCard(); Text("검색·기간·즐겨찾기 조건도 확인해보세요.").font(.caption).foregroundStyle(.secondary) }
+                ForEach(types, id: \.self) { key in
+                    let selected = records.filter { $0.recordType == key }
+                    if let latest = selected.first {
+                        VStack(alignment: .leading, spacing: 14) {
+                            HStack {
+                                NavigationLink { HealthRecordList(records: selected) } label: { HStack { VStack(alignment: .leading, spacing: 8) { Text(latest.title).font(.headline); Text(latest.summaryValue).font(.title2.bold()).foregroundStyle(Palette.blue); Text("\(selected.count)개 기록 · " + latest.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").foregroundStyle(.secondary) }.contentShape(Rectangle()) }.buttonStyle(.plain)
+                                Button { var next = favorites; if next.contains(key) { next.remove(key) } else { next.insert(key) }; encodedFavorites = next.sorted().joined(separator: ",") } label: { Image(systemName: favorites.contains(key) ? "star.fill" : "star").font(.title3).frame(width: 44, height: 44) }.accessibilityLabel(favorites.contains(key) ? "즐겨찾기 해제" : "즐겨찾기 추가").accessibilityIdentifier("health-favorite-" + key)
+                            }
+                            Text(HealthBrowserQuery.source(latest).isEmpty ? "원본 출처 정보 없음" : HealthBrowserQuery.source(latest)).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                        }.careCard()
                     }
                 }
+                Text("의료 문서는 가져온 시각으로 기간을 조회해요. 실제 진료 날짜는 원문에서 확인합니다.").font(.caption).foregroundStyle(.secondary)
                 if let availability = journal.state.healthAvailability { DisclosureGroup("항목별 연결 상태") { ForEach(availability) { item in HStack { Text(item.title); Spacer(); Text(item.statusTitle).font(.caption).foregroundStyle(.secondary) }.padding(.vertical, 5) } }.careCard() }
             }.padding(22)
-        }.background(Color(.systemGroupedBackground)).navigationTitle("건강 데이터").searchable(text: $search, prompt: "심박·혈압·영양 등 검색")
+        }.background(Color(.systemGroupedBackground)).navigationTitle("건강 데이터").searchable(text: $search, prompt: "항목·원본 앱·기기 검색")
     }
 }
 struct HealthRecordList: View {
