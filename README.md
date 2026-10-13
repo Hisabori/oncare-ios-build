@@ -1,3 +1,11 @@
+# OnCare iOS 3.12.0 · build 21
+
+Health records now support persistent favorites, whole-calendar-day 7/30-day filtering, and source/device search. 84 automated checks passed: 73 unit, 10 app UI, and 1 system widget gallery. ARM64 app and widget packaging validated. IPA requires AltStore/SideStore signing.
+
+Verified build: https://github.com/Hisabori/oncare-ios-build/actions/runs/38411794718 (source 88c32d7eef0634be096c190d515a476eb5c0cc2d). Android, signing keys, local configuration and personal health data are excluded. Physical device sync is not covered by simulator tests.
+
+---
+
 ## 3.10 최신 배포 검증
 
 iOS 3.10.0 · 빌드 19입니다. 빠른 기록·고정 항목 편집·실제 기록의 주간 하이라이트를 추가했습니다. [빌드 성공](https://github.com/Hisabori/oncare-ios-build/actions/runs/38377330094): 71개 단위 검사·10개 앱 화면 검사·1개 시스템 위젯 목록 검사, 총 82개가 통과했습니다. unsigned IPA는 AltStore/SideStore 서명이 필요합니다. 아래는 이전 배포 기록입니다.
