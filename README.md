@@ -1,20 +1,11 @@
-# OnCare iOS build
+# OnCare iOS · 3.9.0 / 빌드 13
 
-Public build snapshot of OnCare 3.9.0, build 12. Includes the iPhone app, WidgetKit extension, unit/UI tests and a manually triggered unsigned IPA workflow.
+검토된 iOS 앱·위젯·공통 코드·테스트·이미지·수동 빌드 설정 58개 파일을 포함하는 공개 빌드 전용 저장소입니다. 원본 Hisabori/example 저장소는 비공개로 유지합니다. 실제 건강 데이터, Android 서명 키, 개발자 인증서 또는 기존 비공개 Git 이력은 포함하지 않습니다. 테스트 자료는 합성 값입니다.
 
-The snapshot contains source code and synthetic test fixtures only. Original Git history, Android code, private documents, user health records, signing certificates, account credentials and previous build outputs are not included.
+건강·운동 42종과 의료 문서 12종을 지원 Android의 Health Connect에서 읽어 같은 Wi-Fi로 전달받는 보관함, 원본 수면 4단계 시간표, NHS 아티클 10편, QR 연결과 위젯을 제공합니다. 제공 OS·권한·원본 앱 공유에 따라 항목이 달라집니다. 의료 원문을 보존하며 처방·복용 일정을 자동 변경하지 않습니다.
 
-## Build
+[3.9 성공 빌드](https://github.com/Hisabori/oncare-ios-build/actions/runs/38348687462): ARM64 앱·위젯 및 검사 78개(단위 68·앱 UI 9·실제 시스템 위젯 목록 1) 통과. 검사한 앱 소스 커밋은 1ba75a5a5c7d87605bd75de948cafecf782015a7입니다. 이후 문서 변경은 앱 코드에 영향을 주지 않습니다. unsigned IPA의 설치 서명은 AltStore/SideStore에서 수행합니다.
 
-Open Actions → Build OnCare unsigned IPA → Run workflow. The standard macOS runner compiles the app and widget, runs the tests, then packages the IPA. The workflow has contents-read permission and uses actions pinned to full commit SHAs. No Apple account or signing secret is used.
+확장 건강 자료가 있는 iPhone 전체 백업은 버전 4입니다. 이전 앱/Android 일반 일지 복원 화면은 이를 가져오지 않아 확장 자료가 누락되는 복원을 막습니다. 의료 항목 날짜는 가져온 시각이며 진료·검사 시각은 FHIR 원문에서 확인합니다.
 
-Download OnCare-unsigned-ipa after a successful run. Sign and install the IPA on your own device using AltStore or SideStore. No new IPA is published when tests fail.
-
-## App features
-
-Personal health journal, sleep routines, workout timer, medications, articles, widgets and shortcuts. QR pairing is Android-to-iPhone on the same Wi-Fi. Personal summary sharing offers selected categories, 7/30-day ranges and a preview. Health notes, medication details and pairing credentials are omitted from the summary.
-
-The app is a personal journal and does not provide diagnosis or treatment. Camera scans and actual device-to-device transfer require physical-device verification.
-
-## 3.9 건강 데이터 확장
-지원 Android가 제공하고 사용자가 허용한 건강·운동 42종 및 의료 문서 12종을 같은 Wi-Fi로 전달받는 보관함, 원본 수면 4단계 시간표, NHS 아티클 10편을 포함합니다. 문서의 실제 진료 날짜는 FHIR 원문에서 확인하며 처방이나 복용 일정을 자동 변경하지 않습니다. 확장 자료가 있는 iPhone 백업은 버전 4이며 이전 앱과 Android 일반 일지 백업 화면에서는 가져올 수 없습니다. 이 공개 저장소에는 실제 건강 기록이나 Android 서명 키가 없습니다.
+실물 워치·두 휴대폰의 최신 확장 데이터 전송과 카메라 스캔·사이드로딩 설치는 확인하지 못했습니다.
