@@ -76,6 +76,7 @@ struct MedicationEditor: View {
     @EnvironmentObject private var store: MedicationStore
     @Environment(\.dismiss) private var dismiss
     @State var plan: MedicationPlan
+    @State private var showBagReader = false
     @State private var busy = false
     private var time: Binding<Date> {
         Binding(get: { Calendar.current.date(from: DateComponents(year: 2026, month: 1, day: 1, hour: plan.hour, minute: plan.minute)) ?? Date() }, set: { plan.hour = Calendar.current.component(.hour, from: $0); plan.minute = Calendar.current.component(.minute, from: $0) })
@@ -83,6 +84,7 @@ struct MedicationEditor: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section { Button("약봉지 사진에서 글자 읽기") { showBagReader = true }.accessibilityIdentifier("medication-ocr-open"); Text("인식한 줄을 선택해 입력하세요. 약 이름·용량·시간은 원본과 직접 확인하며 자동으로 저장하지 않습니다.").font(.caption).foregroundStyle(.secondary) }
                 Section("처방받은 복용 일정") {
                     TextField("약 이름", text: $plan.name).accessibilityIdentifier("medication-name")
                     TextField("복용 방법 · 처방대로 입력 (선택)", text: $plan.instructions, axis: .vertical).accessibilityIdentifier("medication-instructions")
@@ -103,6 +105,7 @@ struct MedicationEditor: View {
                     ToolbarItem(placement: .navigationBarLeading) { Button("취소") { dismiss() }.disabled(busy) }
                     ToolbarItem(placement: .navigationBarTrailing) { Button(busy ? "저장 중…" : "저장") { savePlan() }.disabled(busy).accessibilityIdentifier("medication-save") }
                 }.interactiveDismissDisabled(busy)
+                .sheet(isPresented: $showBagReader) { MedicationBagReader { value, name in if name { plan.name = String(value.prefix(80)) } else { plan.instructions = String(value.prefix(200)) }; plan.enabled = false } }
                 .onAppear { store.message = nil }
         }
     }

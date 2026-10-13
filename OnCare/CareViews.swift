@@ -166,6 +166,7 @@ struct BodyView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text("내 몸의 변화를 차근차근").font(.largeTitle.bold())
+                    CareButton(title: "건강 생활 설문 · 최근 7일 돌아보기", id: "health-survey-open") { sheet = .survey }
                     CareButton(title: "실천 센터 · 운동 시작하기", color: Palette.teal, id: "body-practice-open") { sheet = .practice }
                     Picker("기간", selection: $range) { ForEach([7,30,90], id: \.self) { Text("\($0)일").tag($0) } }.pickerStyle(.segmented)
                     NavigationLink { HealthRecordsView() } label: { Label("연결된 건강 정보 · 항목별 보기", systemImage: "heart.text.square.fill").font(.headline).frame(maxWidth: .infinity, alignment: .leading).careCard() }.buttonStyle(.plain).accessibilityIdentifier("health-records-open")

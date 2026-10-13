@@ -192,5 +192,7 @@ final class PracticeTests: XCTestCase {
         XCTAssertFalse(text.contains("PRIVATE-NOTE")); XCTAssertFalse(text.contains("PRIVATE-SOURCE"))
     }
 
+    func testSurveyRequiresEveryAnswerAndLimitsNotApplicableToMedication() { XCTAssertFalse(HealthSurveyResponse(answers: [-1, 2, 3, 5]).valid); XCTAssertFalse(HealthSurveyResponse(answers: [5, 2, 3, 5]).valid); XCTAssertTrue(HealthSurveyResponse(answers: [0, 2, 3, 5]).valid); XCTAssertFalse(HealthSurveyResponse(answers: [0, 2, 3]).valid) }
+    func testBagTextPreservesLinesWithoutGuessingMedication() { XCTAssertEqual(MedicationBagText.lines("  원본 줄  \n\n아침 식후"), ["원본 줄", "아침 식후"]); XCTAssertEqual(MedicationBagText.lines(Array(repeating: "줄", count: 110).joined(separator: "\n")).count, 100); XCTAssertEqual(MedicationBagText.lines(String(repeating: "가", count: 600)).first?.count, 500) }
 }
 
