@@ -20,13 +20,16 @@ struct MedicationHomeCard: View {
     }
 }
 struct MedicationHistoryView: View {
+    @State private var days = 7
+    @State private var confirmedOnly = false
     @EnvironmentObject private var store: MedicationStore
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         NavigationStack {
             List {
-                Section { Text("최근 7일에 직접 남긴 복용 확인이에요. 확인이 없다고 미복용으로 판단하지 않아요. 약 이름은 현재 등록된 일정 기준입니다.").font(.subheadline).foregroundStyle(.secondary) }
-                ForEach(MedicationInsights.history(store.state)) { day in
+                Section { Text("선택한 기간에 직접 남긴 복용 확인이에요. 확인이 없다고 미복용으로 판단하지 않아요. 약 이름은 현재 등록된 일정 기준입니다.").font(.subheadline).foregroundStyle(.secondary) }
+                Section { Picker("조회 기간", selection: $days) { Text("7일").tag(7); Text("30일").tag(30) }.pickerStyle(.segmented).accessibilityIdentifier("medication-history-period"); Toggle("확인 기록이 있는 날만", isOn: $confirmedOnly).accessibilityIdentifier("medication-history-confirmed-only") }
+                ForEach(MedicationInsights.history(store.state, days: days).filter { !confirmedOnly || !$0.confirmed.isEmpty }) { day in
                     Section(koreanDate(day.date, weekday: true)) {
                         if day.confirmed.isEmpty { Text("복용 확인 기록 없음").foregroundStyle(.secondary) }
                         ForEach(day.confirmed) { plan in Label(plan.name + " · " + plan.timeLabel, systemImage: "checkmark.circle.fill").foregroundStyle(Palette.teal) }

@@ -47,8 +47,8 @@ enum MedicationInsights {
         let weekday = calendar.component(.weekday, from: now)
         return state.plans.filter { $0.weekdays.contains(weekday) }.sorted { $0.hour == $1.hour ? ($0.minute == $1.minute ? $0.id < $1.id : $0.minute < $1.minute) : $0.hour < $1.hour }
     }
-    static func history(_ state: MedicationState, now: Date = Date(), calendar: Calendar = .current) -> [MedicationDay] {
-        (0..<7).compactMap { offset in
+    static func history(_ state: MedicationState, days: Int = 7, now: Date = Date(), calendar: Calendar = .current) -> [MedicationDay] {
+        (0..<min(30, max(1, days))).compactMap { offset in
             guard let date = calendar.date(byAdding: .day, value: -offset, to: now) else { return nil }
             let ids = state.checks[dateKey(date)] ?? []
             return MedicationDay(date: date, confirmed: state.plans.filter { ids.contains($0.id) })

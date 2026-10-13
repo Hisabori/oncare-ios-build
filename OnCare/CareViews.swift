@@ -101,7 +101,9 @@ struct MindView: View {
     @State private var mood: Int?
     @State private var sheet: CareSheet?
     @State private var editing: Entry?
+    @State private var moodQuery = ""
     @State private var moodDays = 7
+    private var diary: [Entry] { journal.entries.filter { $0.kind == "마음" && $0.date >= dayOffset(-(moodDays - 1)) && $0.date <= Date() && (moodQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || $0.note.localizedCaseInsensitiveContains(moodQuery.trimmingCharacters(in: .whitespacesAndNewlines))) }.sorted { $0.date > $1.date } }
     var data: [Entry] { journal.daily("마음", from: dayOffset(-(moodDays - 1))) }
     var body: some View {
         NavigationStack {
@@ -119,7 +121,11 @@ struct MindView: View {
                     VStack(alignment: .leading, spacing: 12) { Label("편안하게 호흡해요", systemImage: "wind").font(.headline); Text("들이쉬기 4초 · 내쉬기 6초").font(.subheadline).foregroundStyle(.secondary); CareButton(title: "호흡 시작", color: Palette.purple, id: "breathing-open") { sheet = .breathing }; Text("불편하면 언제든 멈추세요.").font(.caption).foregroundStyle(.secondary) }.careCard()
                     VStack(alignment: .leading, spacing: 10) { Text("마음 일기가 막막할 때").font(.headline); Text("무슨 일이 있었나요?\n몸에서는 어떤 느낌이 들었나요?\n지금 나에게 필요한 작은 한 가지는 무엇인가요?").font(.subheadline).foregroundStyle(.secondary); CareButton(title: "이야기 남기기", color: Palette.purple, id: "mood-journal-prompt") { mood = 3 }; Text("기록이 없는 날은 평균에서 제외해요. 점수는 내 기록을 돌아보기 위한 값이며 진단이 아닙니다.").font(.caption).foregroundStyle(.secondary) }.careCard()
                     SectionTitle(title: "나의 마음 일기")
-                    ForEach(Array(journal.entries.filter { $0.kind == "마음" }.prefix(3))) { e in EntryCard(entry: e) { editing = e } }
+                    TextField("마음 일기 검색", text: $moodQuery).textFieldStyle(.roundedBorder).accessibilityIdentifier("mood-diary-search")
+                    Text("\(diary.count)개 기록 · 최근 \(moodDays)일").font(.caption).foregroundStyle(.secondary)
+                    if diary.isEmpty { Text("일치하는 마음 기록이 없어요. 검색어나 기간을 바꿔보세요.").foregroundStyle(.secondary) }
+                    ForEach(Array(diary.prefix(100))) { e in VStack(alignment: .leading, spacing: 6) { Text(e.date, format: .dateTime.month().day()).font(.caption).foregroundStyle(.secondary); EntryCard(entry: e) { editing = e } } }
+                    if diary.count > 100 { Text("최근 100개를 표시해요. 검색어로 좁혀보세요.").font(.caption).foregroundStyle(.secondary) }
                 }.padding(22)
             }.background(Color(.systemGroupedBackground)).navigationTitle("마음").navigationBarTitleDisplayMode(.inline)
                 .sheet(isPresented: Binding(get: { mood != nil }, set: { if !$0 { mood = nil } })) { RecordView(kind: "마음", initialMood: mood ?? 3) }

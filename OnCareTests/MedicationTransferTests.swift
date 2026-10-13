@@ -52,6 +52,6 @@ final class MedicationTransferTests: XCTestCase {
         let state = try MedicationTransfer.decode(fixture())
         let formatter = ISO8601DateFormatter(); let now = try XCTUnwrap(formatter.date(from: "2026-10-12T12:00:00Z"))
         let history = MedicationInsights.history(state, now: now)
-        XCTAssertEqual(history.count, 7); XCTAssertEqual(history[0].confirmed.count, 1); XCTAssertTrue(history[1].confirmed.isEmpty)
+        XCTAssertEqual(MedicationInsights.history(state, days: 30, now: now).count, 30); XCTAssertEqual(MedicationInsights.history(state, days: 100, now: now).count, 30); XCTAssertEqual(MedicationInsights.history(state, days: 0, now: now).count, 1); XCTAssertEqual(history.count, 7); XCTAssertEqual(history[0].confirmed.count, 1); XCTAssertTrue(history[1].confirmed.isEmpty)
     }
 }

@@ -92,7 +92,11 @@ struct CareAppShortcuts: AppShortcutsProvider {
 }
 @MainActor final class CareShortcutSceneDelegate: NSObject, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        if let url = connectionOptions.urlContexts.first?.url { CareShortcutRouter.shared.open(url) }
         if let shortcut = connectionOptions.shortcutItem { CareShortcutRouter.shared.open(quickActionType: shortcut.type) }
+    }
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        if let url = URLContexts.first?.url { CareShortcutRouter.shared.open(url) }
     }
     func windowScene(_ windowScene: UIWindowScene, performActionFor shortcutItem: UIApplicationShortcutItem, completionHandler: @escaping (Bool) -> Void) {
         completionHandler(CareShortcutRouter.shared.open(quickActionType: shortcutItem.type))
