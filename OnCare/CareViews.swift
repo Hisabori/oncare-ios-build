@@ -101,7 +101,8 @@ struct MindView: View {
     @State private var mood: Int?
     @State private var sheet: CareSheet?
     @State private var editing: Entry?
-    var data: [Entry] { journal.daily("마음", from: dayOffset(-6)) }
+    @State private var moodDays = 7
+    var data: [Entry] { journal.daily("마음", from: dayOffset(-(moodDays - 1))) }
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -111,10 +112,12 @@ struct MindView: View {
                         Text("지금의 마음은 어떤가요?").font(.headline); Text("감정을 고르고, 오늘의 이야기를 남겨보세요.").font(.subheadline).foregroundStyle(.secondary)
                         HStack { ForEach(1...5, id: \.self) { score in Button { mood = score } label: { VStack(spacing: 8) { MoodFace(score: score); Text(["힘듦", "지침", "보통", "좋음", "행복"][score-1]).font(.caption2).foregroundStyle(.secondary) }.frame(maxWidth: .infinity) }.buttonStyle(.plain).accessibilityIdentifier("mood-choice-\(score)") } }
                     }.careCard()
-                    SectionTitle(title: "최근 7일, 마음의 흐름")
+                    Picker("마음 기록 기간", selection: $moodDays) { Text("7일").tag(7); Text("30일").tag(30) }.pickerStyle(.segmented).accessibilityIdentifier("mood-period-filter")
+                    SectionTitle(title: "최근 \(moodDays)일, 마음의 흐름")
                     VStack(alignment: .leading, spacing: 12) { Text(data.isEmpty ? "아직 기록이 없어요" : number(data.reduce(0) { $0 + $1.value } / Double(data.count)) + " / 5").font(.title.bold()); Text("하루 마지막 체크인 기준 · \(data.count)일 기록").font(.caption).foregroundStyle(.secondary); TrendChart(entries: data, kind: "마음") }.careCard()
                     SectionTitle(title: "1분, 나를 위한 쉼")
                     VStack(alignment: .leading, spacing: 12) { Label("편안하게 호흡해요", systemImage: "wind").font(.headline); Text("들이쉬기 4초 · 내쉬기 6초").font(.subheadline).foregroundStyle(.secondary); CareButton(title: "호흡 시작", color: Palette.purple, id: "breathing-open") { sheet = .breathing }; Text("불편하면 언제든 멈추세요.").font(.caption).foregroundStyle(.secondary) }.careCard()
+                    VStack(alignment: .leading, spacing: 10) { Text("마음 일기가 막막할 때").font(.headline); Text("무슨 일이 있었나요?\n몸에서는 어떤 느낌이 들었나요?\n지금 나에게 필요한 작은 한 가지는 무엇인가요?").font(.subheadline).foregroundStyle(.secondary); CareButton(title: "이야기 남기기", color: Palette.purple, id: "mood-journal-prompt") { mood = 3 }; Text("기록이 없는 날은 평균에서 제외해요. 점수는 내 기록을 돌아보기 위한 값이며 진단이 아닙니다.").font(.caption).foregroundStyle(.secondary) }.careCard()
                     SectionTitle(title: "나의 마음 일기")
                     ForEach(Array(journal.entries.filter { $0.kind == "마음" }.prefix(3))) { e in EntryCard(entry: e) { editing = e } }
                 }.padding(22)

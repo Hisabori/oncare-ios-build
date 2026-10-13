@@ -17,6 +17,7 @@ struct MedicationView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) { Text("나를 챙기는 시간").font(.largeTitle.bold()); Text("처방받은 일정대로, 차분히 확인해요.").foregroundStyle(.secondary) }
+                    progressCard
                     statusCard
                     HStack { Button("복용 확인 기록") { showHistory = true }.accessibilityIdentifier("medication-history-open"); Spacer(); Button("투약 백업") { showBackup = true }.accessibilityIdentifier("medication-backup-open") }
                     SectionTitle(title: "오늘의 복용 일정")
@@ -39,6 +40,17 @@ struct MedicationView: View {
                     Button("삭제", role: .destructive) { if let id = deleting?.id { Task { await store.remove(id) } }; deleting = nil }
                 }.task { now = Date(); await store.refresh() }
         }
+    }
+    private var progressCard: some View {
+        let checked = today.filter { store.checked($0.id, now: now) }.count
+        let pending = today.filter { !store.checked($0.id, now: now) }
+        return VStack(alignment: .leading, spacing: 12) {
+            Label("오늘의 복용 확인", systemImage: "pills.fill").font(.headline).foregroundStyle(Palette.teal)
+            Text("\(checked) / \(today.count)개 확인").font(.title.bold())
+            if !today.isEmpty { ProgressView(value: Double(checked), total: Double(today.count)).tint(Palette.teal) }
+            Text(pending.first.map { "남은 첫 일정 · " + $0.timeLabel + " · " + $0.name } ?? (today.isEmpty ? "등록한 요일에 맞춰 일정이 표시돼요." : "오늘 일정의 복용 확인을 모두 남겼어요.")).font(.subheadline)
+            Text("확인 기록 기준입니다. 미확인은 미복용을 뜻하지 않으며, 지난 시간의 약을 추가로 복용하라는 안내가 아닙니다.").font(.caption).foregroundStyle(.secondary)
+        }.careCard().accessibilityIdentifier("medication-today-progress")
     }
     private var statusCard: some View {
         VStack(alignment: .leading, spacing: 12) {
