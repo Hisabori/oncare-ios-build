@@ -23,7 +23,7 @@ struct PersonalCareSettingsView: View {
         NavigationStack { Form {
             Section("내 생활에 맞추기") {
                 TextField("부르고 싶은 이름 (선택)", text: $name).accessibilityIdentifier("personalize-name")
-                    .onChange(of: name) { name = String(name.filter { $0.unicodeScalars.allSatisfy { !CharacterSet.controlCharacters.contains($0) } }.prefix(30)) }
+                    .onChange(of: name) { value in name = String(value.filter { $0.unicodeScalars.allSatisfy { !CharacterSet.controlCharacters.contains($0) } }.prefix(30)) }
                 Picker("지금 관심 있는 분야", selection: $focus) { ForEach(["마음", "수면", "운동", "투약"], id: \.self) { Text($0) } }
                 Picker("기본 운동 목표", selection: $minutes) { ForEach([10,20,30,60], id: \.self) { Text("\($0)분").tag($0) } }
             }
@@ -52,3 +52,4 @@ struct CrisisSupportView: View {
         VStack(alignment: .leading, spacing: 10) { Text(title).font(.headline); Text(detail).foregroundStyle(.secondary); Button { openURL(URL(string:url)!) { accepted in if !accepted { failed = true } } } label: { Label(number + " · 전화 화면 열기", systemImage: "phone.fill").font(.title3.bold()).frame(minHeight: 48) } }.careCard()
     }
 }
+
