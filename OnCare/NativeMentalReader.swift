@@ -140,7 +140,7 @@ struct NCMHPDFReader: View {
                         guard let pdf = PDFDocument(url: file), pdf.pageCount > 0 else { throw CareError.unreadable }
                         try? FileManager.default.removeItem(at: cache); try FileManager.default.copyItem(at: file, to: cache)
                         document = PDFDocument(url: cache)
-                    } catch is CancellationError { } catch { if !Task.isCancelled { error = "원문을 불러오지 못했어요. 연결 상태를 확인해주세요." } }
+                    } catch is CancellationError { } catch { if !Task.isCancelled { self.error = "원문을 불러오지 못했어요. 연결 상태를 확인해주세요." } }
                 }
         }
     }
