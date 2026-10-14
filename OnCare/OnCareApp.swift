@@ -106,6 +106,7 @@ struct SheetContents: View {
     var body: some Scene {
         WindowGroup {
             RootView().preferredColorScheme(theme == "dark" ? .dark : theme == "light" ? .light : nil).environmentObject(journal).environmentObject(sync).environmentObject(shortcuts).environmentObject(articles).environmentObject(medications).tint(Palette.blue).environment(\.locale, Locale(identifier: "ko_KR"))
+                .onOpenURL { let accepted = shortcuts.open($0); print("OnCare link received at app root: accepted=\(accepted)") }
                 .alert("온케어 안내", isPresented: Binding(get: { journal.notice != nil }, set: { if !$0 { journal.notice = nil } })) { Button("확인") { journal.notice = nil } } message: { Text(journal.notice ?? "") }
         }
     }
@@ -135,7 +136,6 @@ struct RootView: View {
         }
         .background(CarePresentationAnchor(reference: windowReference) { if !windowReady { windowReady = true } }.frame(width: 0, height: 0))
         .sheet(item: $shortcutSheet) { SheetContents(sheet: $0) }
-        .onOpenURL { let accepted = shortcuts.open($0); print("OnCare link received: accepted=\(accepted)") }
         .task(id: scenePhase) { if scenePhase == .active { await medications.refresh() } }
         .task(id: String(describing: medicationNavigation.pending) + String(describing: scenePhase) + String(windowReady) + String(windowReference.generation)) {
             guard scenePhase == .active, windowReady, let request = medicationNavigation.pending, let window = windowReference.window else { return }

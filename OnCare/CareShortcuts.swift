@@ -75,7 +75,7 @@ struct CareAppShortcuts: AppShortcutsProvider {
 }
 
 @MainActor final class CareShortcutAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool { UNUserNotificationCenter.current().delegate = self; return true }
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool { UNUserNotificationCenter.current().delegate = self; if let url = launchOptions?[.url] as? URL { CareShortcutRouter.shared.open(url) }; return true }
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         if response.notification.request.identifier.hasPrefix("oncare-med.") { Task { @MainActor in MedicationNavigation.shared.pending = UUID() } }
         completionHandler()
@@ -91,7 +91,7 @@ struct CareAppShortcuts: AppShortcutsProvider {
         completionHandler(CareShortcutRouter.shared.open(quickActionType: shortcutItem.type))
     }
 }
-@MainActor final class CareShortcutSceneDelegate: NSObject, UIWindowSceneDelegate {
+@MainActor final class CareShortcutSceneDelegate: NSObject, UIWindowSceneDelegate, ObservableObject {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         if let url = connectionOptions.urlContexts.first?.url { CareShortcutRouter.shared.open(url) }
         if let shortcut = connectionOptions.shortcutItem { CareShortcutRouter.shared.open(quickActionType: shortcut.type) }
