@@ -1,3 +1,13 @@
+# OnCare iOS 3.17.0 · build 28
+
+Medication photo text recognition with explicit review, local lifestyle questionnaire, app appearance/navigation preferences, and stable app link entry. All 87 checks passed (76 unit, 10 app UI, 1 system widget gallery). ARM64 app and widget packaging verified. IPA needs AltStore/SideStore signing. Actual medication bag recognition quality and physical device sync need separate device checks.
+
+Verified build: https://github.com/Hisabori/oncare-ios-build/actions/runs/38533059566
+Tested source: dfd6bbb76c7723a5933bd7dbc9324eeae2e04551
+This repository includes reviewed iOS source only; no Android signing keys, local configuration, or personal health data.
+
+---
+
 # OnCare iOS 3.12.0 · build 21
 
 Health records now support persistent favorites, whole-calendar-day 7/30-day filtering, and source/device search. 84 automated checks passed: 73 unit, 10 app UI, and 1 system widget gallery. ARM64 app and widget packaging validated. IPA requires AltStore/SideStore signing.
