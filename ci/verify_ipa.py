@@ -3,7 +3,7 @@ from pathlib import Path
 import plistlib,re,struct,sys,zipfile
 
 ipa=Path(sys.argv[1])
-spec=Path('project.yml').read_text()
+spec=Path('project.yml').read_text(encoding='utf-8')
 version=re.search(r'MARKETING_VERSION:\s*"([^\"]+)"',spec).group(1)
 build=re.search(r'CURRENT_PROJECT_VERSION:\s*"([^\"]+)"',spec).group(1)
 with zipfile.ZipFile(ipa) as archive:

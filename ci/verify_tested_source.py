@@ -14,7 +14,7 @@ assert len(jobs)==1
 steps={step['name']:step['conclusion'] for step in jobs[0]['steps']}
 assert all(steps.get(name)=='success' for name in required),steps
 subprocess.run(['git','diff','--exit-code',SOURCE,'HEAD','--','OnCare','OnCareLive','Shared','OnCareTests','OnCareUITests','project.yml'],check=True)
-log=pathlib.Path('test-evidence/ios-tests.log').read_text()
+log=pathlib.Path('test-evidence/ios-tests.log').read_text(encoding='utf-8')
 passed=[line for line in log.splitlines() if line.startswith('Test Case ') and ' passed ' in line]
 assert len(passed)==91
 assert not any(line.startswith('Test Case ') and ' failed ' in line for line in log.splitlines())

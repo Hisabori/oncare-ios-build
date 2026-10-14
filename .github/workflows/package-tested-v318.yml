@@ -1,0 +1,60 @@
+name: Package verified 3.18 IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/package-tested-v318.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package:
+    if: github.repository == 'Hisabori/oncare-ios-build'
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: OnCare-iOS-test-log
+          run-id: 38565176085
+          github-token: ${{ github.token }}
+          path: test-evidence
+      - name: Verify passed tests and unchanged application source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 ci/verify_tested_source.py
+      - name: Select iOS 26 SDK
+        run: |
+          XCODE=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort | tail -1)
+          test -n "$XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+      - name: Compile the verified iPhone source
+        run: >-
+          xcodebuild -project OnCare.xcodeproj -scheme OnCare
+          -configuration Release -sdk iphoneos
+          -destination 'generic/platform=iOS' -derivedDataPath build
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Package and verify app plus widget
+        run: |
+          mkdir -p package/Payload
+          cp -R build/Build/Products/Release-iphoneos/OnCare.app package/Payload/
+          cd package
+          zip -qry ../OnCare-unsigned.ipa Payload
+          cd ..
+          python3 ci/verify_ipa.py OnCare-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OnCare-unsigned-ipa
+          path: |
+            OnCare-unsigned.ipa
+            verified-source.txt
+          if-no-files-found: error
+          retention-days: 7
