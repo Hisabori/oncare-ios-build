@@ -12,7 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 35
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
       - name: Select iOS 26 SDK
@@ -94,7 +94,8 @@ jobs:
           cp -R build/Build/Products/Release-iphoneos/OnCare.app package/Payload/
           cd package
           zip -qry ../OnCare-unsigned.ipa Payload
-          python3 -c 'import zipfile,plistlib; z=zipfile.ZipFile("../OnCare-unsigned.ipa"); p=plistlib.loads(z.read("Payload/OnCare.app/Info.plist")); assert p["CFBundleIdentifier"]=="app.oncare.personal"; assert p["CFBundleShortVersionString"]=="3.17.0"; assert "Payload/OnCare.app/"+p["CFBundleExecutable"] in z.namelist(); print("PASS: real iPhone IPA structure and version")'
+          cd ..
+          python3 ci/verify_ipa.py OnCare-unsigned.ipa
       - uses: actions/upload-artifact@v4
         with:
           name: OnCare-unsigned-ipa
