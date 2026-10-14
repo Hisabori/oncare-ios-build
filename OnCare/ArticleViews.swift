@@ -67,6 +67,7 @@ struct ArticleLibraryView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) { Text("나를 알아가는 시간").font(.largeTitle.bold()); Text("믿을 수 있는 자료, 일상에 닿는 이야기.").font(.subheadline).foregroundStyle(.secondary) }
                     preferences
+                    MentalPublicResourcesView()
                     Picker("읽을거리", selection: $savedOnly) { Text("추천").tag(false); Text("저장한 글").tag(true) }.pickerStyle(.segmented).accessibilityIdentifier("articles-filter")
                     if recommendations.isEmpty {
                         VStack(spacing: 12) { Image(systemName: savedOnly ? "bookmark" : "magnifyingglass").font(.largeTitle).foregroundStyle(Palette.purple); Text(savedOnly ? "간직하고 싶은 글을 저장해보세요" : "다른 단어로 찾아보세요").font(.headline) }.frame(maxWidth: .infinity).padding(.vertical, 28).accessibilityIdentifier("articles-empty")
