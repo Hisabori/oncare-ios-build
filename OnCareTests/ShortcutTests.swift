@@ -54,4 +54,5 @@ final class ShortcutTests: XCTestCase {
         XCTAssertEqual(CareDestination.mood.tab, 1)
         XCTAssertEqual(CareDestination.sleep.tab, 2)
     }
+    @MainActor func testDuplicatePendingDestinationKeepsRequestIdentity() { let router = CareShortcutRouter(); router.open(.sleep); let id = router.pending?.id; router.open(.sleep); XCTAssertEqual(router.pending?.id, id); router.open(.workout); XCTAssertNotEqual(router.pending?.id, id) }
 }

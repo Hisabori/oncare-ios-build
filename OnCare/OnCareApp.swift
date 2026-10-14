@@ -117,7 +117,7 @@ struct RootView: View {
     @State private var selectedTab = min(4, max(0, UserDefaults.standard.integer(forKey: "app-start-tab")))
     @State private var tabIdentity = UUID()
     @State private var shortcutSheet: CareSheet?
-    @State private var windowReference = CareWindowReference()
+    @StateObject private var windowReference = CareWindowReference()
     @State private var windowReady = false
     @EnvironmentObject private var journal: Journal
     @EnvironmentObject private var sync: LocalHealthSync
@@ -133,11 +133,11 @@ struct RootView: View {
             ArticleLibraryView().tabItem { Label("읽을거리", systemImage: "book.closed") }.tag(4)
         }.id(tabIdentity)
         }
-        .background(CarePresentationAnchor(reference: windowReference) { windowReady = true }.frame(width: 0, height: 0))
+        .background(CarePresentationAnchor(reference: windowReference) { if !windowReady { windowReady = true } }.frame(width: 0, height: 0))
         .sheet(item: $shortcutSheet) { SheetContents(sheet: $0) }
-        .onOpenURL { shortcuts.open($0) }
+        .onOpenURL { let accepted = shortcuts.open($0); print("OnCare link received: accepted=\(accepted)") }
         .task(id: scenePhase) { if scenePhase == .active { await medications.refresh() } }
-        .task(id: String(describing: medicationNavigation.pending) + String(describing: scenePhase) + String(windowReady)) {
+        .task(id: String(describing: medicationNavigation.pending) + String(describing: scenePhase) + String(windowReady) + String(windowReference.generation)) {
             guard scenePhase == .active, windowReady, let request = medicationNavigation.pending, let window = windowReference.window else { return }
             await CareModalDismissal.dismiss(in: window)
             guard !Task.isCancelled, medicationNavigation.pending == request else { return }
@@ -152,8 +152,8 @@ struct RootView: View {
         }.onReceive(calendarTimer) { _ in journal.refreshCalendar() }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in journal.refreshCalendar(force: true) }
             .onChange(of: scenePhase) { if $0 == .active { journal.refreshCalendar(force: true) } }
-            .task(id: CareShortcutTaskKey(request: shortcuts.pending?.id, active: scenePhase == .active, windowReady: windowReady)) {
-                guard scenePhase == .active, windowReady, let request = shortcuts.pending, let window = windowReference.window else { return }
+            .task(id: CareShortcutTaskKey(request: shortcuts.pending?.id, active: scenePhase == .active, windowReady: windowReady, windowGeneration: windowReference.generation)) {
+                guard scenePhase == .active, windowReady, let request = shortcuts.pending, let window = windowReference.window else { print("OnCare link deferred: active=\(scenePhase == .active), ready=\(windowReady), window=\(windowReference.window != nil), pending=\(shortcuts.pending != nil)"); return }
                 // Dismiss the current form without saving it. Recreate only tab view state so its local modal bindings cannot reopen.
                 await CareModalDismissal.dismiss(in: window)
                 guard !Task.isCancelled, shortcuts.pending?.id == request.id else { return }

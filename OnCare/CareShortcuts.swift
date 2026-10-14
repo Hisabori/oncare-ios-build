@@ -20,7 +20,7 @@ extension CareDestination {
 @MainActor final class CareShortcutRouter: ObservableObject {
     static let shared = CareShortcutRouter()
     @Published private(set) var pending: CareRouteRequest?
-    func open(_ destination: CareDestination) { pending = CareRouteRequest(destination: destination) }
+    func open(_ destination: CareDestination) { guard pending?.destination != destination else { return }; pending = CareRouteRequest(destination: destination) }
     @discardableResult func open(_ url: URL) -> Bool {
         guard let destination = CareDestination.parse(url) else { return false }
         open(destination); return true
@@ -81,6 +81,7 @@ struct CareAppShortcuts: AppShortcutsProvider {
         completionHandler()
     }
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) { completionHandler([.banner, .sound]) }
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool { CareShortcutRouter.shared.open(url) }
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
         let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
         if connectingSceneSession.role == .windowApplication { configuration.delegateClass = CareShortcutSceneDelegate.self }
@@ -103,25 +104,30 @@ struct CareAppShortcuts: AppShortcutsProvider {
     }
 }
 
-@MainActor final class CareWindowReference { weak var window: UIWindow? }
+@MainActor final class CareWindowReference: ObservableObject {
+    weak var window: UIWindow?
+    @Published private(set) var generation = 0
+    func attach(_ value: UIWindow?) { guard window !== value else { return }; window = value; generation += 1 }
+}
 struct CareShortcutTaskKey: Equatable {
     let request: UUID?
     let active: Bool
     let windowReady: Bool
+    var windowGeneration: Int = 0
 }
 /// Resolves the window belonging to this view, without looking up an unrelated foreground window.
 struct CarePresentationAnchor: UIViewRepresentable {
     let reference: CareWindowReference
     let ready: () -> Void
     func makeUIView(context: Context) -> AnchorView { let view = AnchorView(); view.reference = reference; view.ready = ready; view.isUserInteractionEnabled = false; return view }
-    func updateUIView(_ uiView: AnchorView, context: Context) { uiView.reference = reference; uiView.ready = ready }
+    func updateUIView(_ uiView: AnchorView, context: Context) { uiView.reference = reference; uiView.ready = ready; uiView.reportWindow() }
     final class AnchorView: UIView {
         var reference: CareWindowReference?
         var ready: (() -> Void)?
         override func didMoveToWindow() {
-            super.didMoveToWindow(); reference?.window = window
-            if window != nil { DispatchQueue.main.async { [weak self] in self?.ready?() } }
+            super.didMoveToWindow(); reportWindow()
         }
+        func reportWindow() { DispatchQueue.main.async { [weak self] in guard let self else { return }; self.reference?.attach(self.window); if self.window != nil { self.ready?() } } }
     }
 }
 @MainActor enum CareModalDismissal {

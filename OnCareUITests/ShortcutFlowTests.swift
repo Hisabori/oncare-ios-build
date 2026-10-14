@@ -4,7 +4,7 @@ final class ShortcutFlowTests: XCTestCase {
     @MainActor func testColdLinkWarmModalReplacementAndInvalidLink() throws {
         guard #available(iOS 26.0, *) else { throw XCTSkip("Direct application URL automation needs the current simulator SDK") }
         let app = XCUIApplication()
-        app.launch(); app.terminate()
+        app.launch(); XCTAssertTrue(app.tabBars.buttons["오늘"].waitForExistence(timeout: 15)); app.terminate()
         app.open(URL(string: "oncare://open/sleep")!)
         XCTAssertTrue(app.navigationBars["수면 루틴"].waitForExistence(timeout: 10), "A cold link must reach the requested form")
         XCUIDevice.shared.system.open(URL(string: "oncare://open/workout")!)
@@ -18,6 +18,7 @@ final class ShortcutFlowTests: XCTestCase {
         XCTAssertFalse(app.navigationBars["마음 기록"].exists)
         XCUIDevice.shared.system.open(URL(string: "oncare://open/mood?save=true")!)
         XCTAssertTrue(app.navigationBars["Android 건강 연결"].waitForExistence(timeout: 5), "An unsupported command must not replace the current form")
+        print("Shortcut final snapshot: " + app.debugDescription)
         app.buttons["닫기"].tap()
         XCTAssertTrue(app.tabBars.buttons["건강"].waitForExistence(timeout: 5))
         let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
