@@ -40,13 +40,13 @@ jobs:
           xcrun simctl bootstatus "$SIM_ID" -b
           xcrun simctl status_bar "$SIM_ID" override --time '9:41' --batteryState charged --batteryLevel 100
           xcrun simctl uninstall "$SIM_ID" app.oncare.personal || true
-      - name: Verify cold and warm system links first
+      - name: Verify system links and timer restoration first
         run: |
           set -o pipefail
           xcodebuild test -project OnCare.xcodeproj -scheme OnCare -configuration Debug \
             -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath simulator-build \
             -resultBundlePath OnCare-shortcut-tests.xcresult -parallel-testing-enabled NO \
-            -only-testing:OnCareUITests/ShortcutFlowTests \
+            -only-testing:OnCareUITests/ShortcutFlowTests -only-testing:OnCareUITests/FlowTests/testPracticeTimerPauseAndRestoration \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO | tee ios-tests.log
       - name: Verify storage, backups and user flows
         run: |
@@ -54,7 +54,7 @@ jobs:
           xcodebuild test -project OnCare.xcodeproj -scheme OnCare -configuration Debug \
             -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath simulator-build \
             -resultBundlePath OnCare-tests.xcresult -parallel-testing-enabled NO \
-            -skip-testing:OnCareUITests/WidgetGalleryTests -skip-testing:OnCareUITests/ShortcutFlowTests \
+            -skip-testing:OnCareUITests/WidgetGalleryTests -skip-testing:OnCareUITests/ShortcutFlowTests -skip-testing:OnCareUITests/FlowTests/testPracticeTimerPauseAndRestoration \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO | tee -a ios-tests.log
       - name: Preserve app screens before restarting
         run: |

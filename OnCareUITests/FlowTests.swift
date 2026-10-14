@@ -12,12 +12,20 @@ final class FlowTests: XCTestCase {
             if today.waitForExistence(timeout: 10) { today.tap() }
             let scroll = app.scrollViews.firstMatch
             for _ in 0..<10 {
-                if app.staticTexts["오늘도, 나답게"].isHittable { break }
+                let heading = app.staticTexts["오늘도, 나답게"]
+                let viewport = app.windows.firstMatch.frame
+                if heading.exists && heading.frame.height > 0 && viewport.contains(heading.frame) && heading.isHittable { break }
                 guard scroll.exists else { break }; scroll.swipeDown()
             }
         }
         let element = app.descendants(matching: .any).matching(identifier: id).firstMatch
-        for _ in 0..<8 { if element.exists && element.isHittable { element.tap(); return }; app.swipeUp() }
+        for _ in 0..<16 {
+            let viewport = app.windows.firstMatch.frame
+            if element.exists && element.frame.height > 0 && viewport.contains(element.frame) && element.isHittable { element.tap(); return }
+            let scroll = app.scrollViews.firstMatch
+            if element.exists && element.frame.minY < viewport.minY { if scroll.exists { scroll.swipeDown() } else { app.swipeDown() } }
+            else { if scroll.exists { scroll.swipeUp() } else { app.swipeUp() } }
+        }
         print("Missing control snapshot: " + app.debugDescription)
         try? screenshot("failed-control-" + id)
         XCTFail("Missing control: "+id)
