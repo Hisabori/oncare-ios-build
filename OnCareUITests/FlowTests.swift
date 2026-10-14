@@ -7,8 +7,19 @@ final class FlowTests: XCTestCase {
         try data.write(to: folder.appendingPathComponent(name+".png"))
     }
     func tap(_ app: XCUIApplication,_ id: String) {
+        if id == "practice-open" {
+            let today = app.tabBars.buttons["오늘"]
+            if today.waitForExistence(timeout: 10) { today.tap() }
+            let scroll = app.scrollViews.firstMatch
+            for _ in 0..<10 {
+                if app.staticTexts["오늘도, 나답게"].isHittable { break }
+                guard scroll.exists else { break }; scroll.swipeDown()
+            }
+        }
         let element = app.descendants(matching: .any).matching(identifier: id).firstMatch
         for _ in 0..<8 { if element.exists && element.isHittable { element.tap(); return }; app.swipeUp() }
+        print("Missing control snapshot: " + app.debugDescription)
+        try? screenshot("failed-control-" + id)
         XCTFail("Missing control: "+id)
     }
     func assertWorkoutReset(_ app: XCUIApplication) {
