@@ -168,6 +168,7 @@ struct AppPreferencesView: View {
                 Picker("앱 시작 화면", selection: $startTab) { Text("오늘").tag(0); Text("마음").tag(1); Text("건강").tag(2); Text("기록").tag(3); Text("읽을거리").tag(4) }.accessibilityIdentifier("preferences-start-tab")
                 Text("시작 화면은 다음 앱 실행부터 적용해요. 바로가기 링크는 요청한 화면을 먼저 엽니다.").font(.caption).foregroundStyle(.secondary)
             }
+            Section("개인화와 도움") { NavigationLink("나에게 맞추기") { PersonalCareSettingsView() }; NavigationLink("도움과 위기지원") { CrisisSupportView() } }
             Section("기록 기본값") { Picker("마음 기록 조회 기간", selection: $moodDays) { Text("7일").tag(7); Text("30일").tag(30) }; Text("마음 화면을 새로 열 때 적용해요.").font(.caption).foregroundStyle(.secondary) }
             Section("알림과 앱 정보") { NavigationLink("하루 기록 알림") { ReminderEditor() }; Text("온케어 " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") + " · 빌드 " + (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "")); Text("설정은 이 기기에 저장돼요. 건강 기록·투약 일정·연결 정보를 바꾸지 않습니다.").font(.caption).foregroundStyle(.secondary) }
             Section { Button("환경설정 기본값으로 복원") { reset = true }.accessibilityIdentifier("preferences-reset") }

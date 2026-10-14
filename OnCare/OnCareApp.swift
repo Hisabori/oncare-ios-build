@@ -178,6 +178,7 @@ struct Dashboard: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     VStack(alignment: .leading, spacing: 8) { Text(koreanDate(Date(), weekday: true)).font(.caption.weight(.semibold)).foregroundStyle(.secondary); Text("오늘도, 나답게").font(.largeTitle.bold()); Text("몸과 마음의 이야기를 만나보세요").font(.subheadline).foregroundStyle(.secondary) }
+                    PersonalCareCard()
                     quickLog
                     pinnedSection
                     hero

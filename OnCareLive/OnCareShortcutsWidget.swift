@@ -11,6 +11,7 @@ import WidgetKit
         CareMedicationShortcutWidget()
         CareArticlesShortcutWidget()
         OnCareLive()
+        CareWorkoutLive()
     }
 }
 

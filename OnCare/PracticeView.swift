@@ -6,6 +6,7 @@ struct PracticeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var workout = WorkoutTimerStore()
+    @AppStorage("care-workout-live") private var liveEnabled = false
     @State private var section = 0
     @State private var type = "걷기"
     @State private var goal = 20
@@ -27,16 +28,20 @@ struct PracticeView: View {
                     Text("오늘의 작은 실천").font(.largeTitle.bold())
                     Text("내 목표로 움직이고, 기록으로 돌아봐요.").font(.subheadline).foregroundStyle(.secondary)
                     Picker("실천 도구", selection: $section) { Text("운동 타이머").tag(0); Text("루틴").tag(1); Text("기록 분석").tag(2) }.pickerStyle(.segmented).accessibilityIdentifier("practice-section")
-                    if section == 0 { timerCard } else if section == 1 { routineCards } else { PracticeInsightsView(day: Calendar.current.startOfDay(for: now)) }
+                    if section == 0 { timerCard
+                        Toggle("운동 타이머를 잠금화면에 표시", isOn: $liveEnabled).font(.subheadline).accessibilityIdentifier("workout-live-toggle")
+                        Text("지원 iPhone에서는 다이내믹 아일랜드에도 표시돼요. 개인 이름·마음·투약 정보는 표시하지 않아요. 앱에서 시작·일시정지·완료하며, 운영체제가 표시 시간을 제한할 수 있어요.").font(.caption).foregroundStyle(.secondary)
+                    } else if section == 1 { routineCards } else { PracticeInsightsView(day: Calendar.current.startOfDay(for: now)) }
                 }.padding(22)
             }.background(Color(.systemGroupedBackground)).navigationTitle("실천 센터").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("닫기") { dismiss() } } }
                 .confirmationDialog("운동 세션을 초기화할까요?", isPresented: $resetting, titleVisibility: .visible) {
                     Button("세션 초기화", role: .destructive) { perform { try workout.reset(); message = "새 운동을 시작할 수 있어요." } }.accessibilityIdentifier("workout-reset-confirm")
                 } message: { Text("아직 저장하지 않은 시간은 사라져요. 이미 저장된 운동 기록은 유지돼요.") }
-                .onAppear { refresh() }
+                .onAppear { let value = UserDefaults.standard.integer(forKey: "care-workout-minutes"); if WorkoutSession.goals.contains(value) { goal = value }; refresh(); reconcileLive() }
+                .onChange(of: liveEnabled) { _ in reconcileLive() }
                 .onReceive(clock) { _ in if scenePhase == .active { refresh() } }
-                .onChange(of: scenePhase) { phase in if phase == .active { refresh() } else { checkpoint() } }
+                .onChange(of: scenePhase) { phase in if phase == .active { refresh() } else { checkpoint() }; reconcileLive() }
                 .onDisappear { checkpoint() }
         }
     }
@@ -84,8 +89,9 @@ struct PracticeView: View {
             }
         }
     }
-    func perform(_ action: () throws -> Void) { do { try action() } catch { message = (error as? PracticeError)?.message ?? PracticeError.unreadable.message } }
-    func refresh() { now = Date(); workout.observe(at: now) }
+    func perform(_ action: () throws -> Void) { do { try action() } catch { message = (error as? PracticeError)?.message ?? PracticeError.unreadable.message }; reconcileLive() }
+    func refresh() { let oldRunning = workout.session?.running; let oldIssue = workout.issue; now = Date(); workout.observe(at: now); if oldRunning != workout.session?.running || oldIssue != workout.issue { reconcileLive() } }
+    func reconcileLive() { WorkoutLiveStatus.reconcile(workout.session, enabled: liveEnabled, valid: workout.issue == nil) }
     func checkpoint() { guard workout.session != nil else { return }; do { try workout.checkpoint() } catch {} }
 }
 
