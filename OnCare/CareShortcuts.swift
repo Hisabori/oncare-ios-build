@@ -11,9 +11,12 @@ extension CareDestination {
         case .workout: return .practice
         case .mood: return .mood
         case .connect: return .healthConnection
+        case .medication: return .medications
+        case .articles: return .articles
+        case .intelligence: return .intelligence
         }
     }
-    var tab: Int { self == .mood ? 1 : 2 }
+    var tab: Int { self == .mood ? 1 : (self == .articles || self == .intelligence ? 0 : 2) }
 }
 
 /// Keeps a cold-launch request until the scene is active. A later request always wins.
@@ -71,6 +74,9 @@ struct CareAppShortcuts: AppShortcutsProvider {
         AppShortcut(intent: OpenCareWorkoutIntent(), phrases: ["\(.applicationName) 운동 타이머 열어줘"], shortTitle: "운동 타이머", systemImageName: "figure.walk")
         AppShortcut(intent: OpenCareMoodIntent(), phrases: ["\(.applicationName) 마음 기록 열어줘"], shortTitle: "마음 기록", systemImageName: "heart.text.square.fill")
         AppShortcut(intent: OpenCareConnectionIntent(), phrases: ["\(.applicationName) 건강 연결 열어줘"], shortTitle: "건강 연결", systemImageName: "arrow.triangle.2.circlepath")
+        AppShortcut(intent: OpenCareMedicationIntent(), phrases: ["\(.applicationName) 투약 확인 열어줘"], shortTitle: "투약 확인", systemImageName: "pills.fill")
+        AppShortcut(intent: OpenCareArticlesIntent(), phrases: ["\(.applicationName) 마음 읽을거리 열어줘"], shortTitle: "마음 읽을거리", systemImageName: "book.closed.fill")
+        AppShortcut(intent: OpenCareIntelligenceIntent(), phrases: ["\(.applicationName) 기록 인사이트 열어줘"], shortTitle: "기록 인사이트", systemImageName: "sparkles")
     }
 }
 

@@ -31,6 +31,11 @@ struct WidgetHelpView: View {
                         Text("위젯 목록에 온케어가 없을 때").font(.title3.bold())
                         Text("1. 기존 건강 기록을 먼저 백업하세요.\n\n2. 설치 도구에서 앱 확장을 유지한 채 이 IPA로 업데이트하세요. 앱을 먼저 삭제하지 마세요.\n\n3. 온케어를 한 번 열고 홈 화면으로 돌아가세요.\n\n4. 홈 화면 길게 누르기 → 편집 → 위젯 추가에서 ‘온케어’를 검색하세요.\n\n5. 확장이 포함되어도 계속 보이지 않으면 iPhone을 재시동하고 확장 서명 상태를 설치 도구에서 확인하세요.").font(.body).lineSpacing(4)
                     }.careCard()
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("잠금화면에서 바로 열기").font(.title3.bold())
+                        Text("잠금화면 길게 누르기 → 사용자화 → 잠금화면 → 위젯 추가 → 온케어에서 수면·마음·투약·읽을거리를 선택하세요. 원형·직사각형·날짜 위 한 줄 위젯을 지원해요. 건강 수치와 약 이름은 잠금화면에 표시하지 않고 앱에서 확인합니다.").font(.body).lineSpacing(4)
+                        Text("Siri에서 설치된 앱 이름과 함께 투약 확인 열어줘, 마음 읽을거리 열어줘, 기록 인사이트 열어줘라고 말해보세요. 복용 확인·기록 저장·AI 요약은 앱에서 직접 선택합니다.").font(.subheadline).foregroundStyle(.secondary)
+                    }.careCard()
                     CareButton(title: "추가된 위젯 새로고침", id: "widget-reload") { WidgetCenter.shared.reloadAllTimelines(); query() }
                     Text("새로고침은 이미 추가한 위젯의 내용을 갱신합니다. 빠진 확장을 설치하거나 위젯 목록을 강제로 등록하는 기능은 아닙니다.").font(.caption).foregroundStyle(.secondary)
                 }.padding(22)

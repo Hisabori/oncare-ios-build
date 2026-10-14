@@ -8,6 +8,8 @@ import WidgetKit
         CareWorkoutShortcutWidget()
         CareMoodShortcutWidget()
         CareConnectionShortcutWidget()
+        CareMedicationShortcutWidget()
+        CareArticlesShortcutWidget()
         OnCareLive()
     }
 }
@@ -91,3 +93,5 @@ struct CareSleepShortcutWidget: Widget { var body: some WidgetConfiguration { ca
 struct CareWorkoutShortcutWidget: Widget { var body: some WidgetConfiguration { careRouteWidget(.workout) } }
 struct CareMoodShortcutWidget: Widget { var body: some WidgetConfiguration { careRouteWidget(.mood) } }
 struct CareConnectionShortcutWidget: Widget { var body: some WidgetConfiguration { careRouteWidget(.connect) } }
+struct CareMedicationShortcutWidget: Widget { var body: some WidgetConfiguration { careRouteWidget(.medication) } }
+struct CareArticlesShortcutWidget: Widget { var body: some WidgetConfiguration { careRouteWidget(.articles) } }

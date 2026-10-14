@@ -8,7 +8,7 @@ final class ShortcutTests: XCTestCase {
             XCTAssertEqual(CareDestination.parse(quickActionType: destination.quickActionType), destination)
             XCTAssertNil(URLComponents(url: destination.url, resolvingAgainstBaseURL: false)?.query)
         }
-        XCTAssertEqual(Set(CareDestination.allCases.map(\.url)).count, 4)
+        XCTAssertEqual(Set(CareDestination.allCases.map(\.url)).count, 7)
         let rejected = [
             "https://open/sleep", "oncare://unknown/sleep", "oncare://open/unknown",
             "oncare://open/sleep/", "oncare://open/sleep/mood", "oncare://open/%73leep",

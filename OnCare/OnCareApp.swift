@@ -69,7 +69,7 @@ struct TrendChart: View {
     }
 }
 enum CareSheet: String, Identifiable {
-    case survey, preferences, intelligence, healthConnection, sleepRoutine, practice, medications, widgetHelp
+    case survey, preferences, intelligence, healthConnection, sleepRoutine, practice, medications, widgetHelp, articles
     case mood = "마음", weight = "체중", exercise = "운동", sleep = "수면", water = "물", goals, routines, report, reminders, breathing
     var id: String { rawValue }
 }
@@ -78,6 +78,7 @@ struct SheetContents: View {
     var body: some View {
         switch sheet {
         case .survey: HealthSurveyView()
+        case .articles: ArticleLibraryView(isSheet: true)
         case .preferences: AppPreferencesView()
         case .medications: MedicationView()
         case .widgetHelp: WidgetHelpView()

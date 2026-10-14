@@ -58,7 +58,7 @@ struct RecordView: View {
                     }
                 }
                 if existing?.bedTime != nil { Section { Text("시각으로 계산한 수면 기록이에요. 수면량이나 기록 시각을 바꾸면 시각 상세 정보는 초기화돼요.").font(.caption).foregroundStyle(.secondary) } }
-                Section(kind == "마음" ? "오늘의 이야기 (선택)" : "메모 (선택)") { TextField("편하게 적어주세요", text: $note, axis: .vertical).lineLimit(3...6).accessibilityIdentifier("record-note") }
+                Section(kind == "마음" ? "오늘의 이야기 (선택)" : "메모 (선택)") { TextField("편하게 적어주세요", text: $note, axis: .vertical).lineLimit(3...6).accessibilityIdentifier("record-note").careWritingTools() }
                 if !error.isEmpty { Section { Text(error).foregroundStyle(.red) } }
                 if !valid && !value.isEmpty { Section { Text("숫자 범위와 선택 항목을 확인해주세요.").font(.caption).foregroundStyle(.secondary) } }
             }.navigationTitle(kind + (existing == nil ? " 기록" : " 기록 수정")).navigationBarTitleDisplayMode(.inline)

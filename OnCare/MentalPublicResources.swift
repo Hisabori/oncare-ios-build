@@ -5,6 +5,7 @@ struct MentalNewsItem: Codable, Identifiable {
     var title: String
     var link: String
     var date: String
+    var summary: String?
     var id: String { link }
 }
 
@@ -13,14 +14,14 @@ final class MentalNewsParser: NSObject, XMLParserDelegate {
     var hasFeed = false
     private var entry = false
     private var field = ""
-    private var title = "", link = "", date = ""
+    private var title = "", link = "", date = "", summary = ""
     static func allowed(_ value: String) -> Bool {
         guard let u = URL(string: value), u.scheme == "https", u.host == "www.nimh.nih.gov", u.user == nil, u.password == nil else { return false }
         return (u.port == nil || u.port == 443) && u.path.hasPrefix("/news/")
     }
     func parser(_ parser: XMLParser, didStartElement name: String, namespaceURI: String?, qualifiedName: String?, attributes: [String: String]) {
         if name == "feed" { hasFeed = true }
-        if name == "entry" { entry = true; title = ""; link = ""; date = "" }
+        if name == "entry" { entry = true; title = ""; link = ""; date = ""; summary = "" }
         field = name
         if entry && name == "link" && attributes["rel"] == "alternate" { link = attributes["href"] ?? "" }
     }
@@ -28,11 +29,13 @@ final class MentalNewsParser: NSObject, XMLParserDelegate {
         guard entry else { return }
         if field == "title" { title += value }
         if field == "published" { date += value }
+        if field == "updated" && date.isEmpty { date += value }
+        if field == "summary", summary.count < 6000 { summary += value }
     }
     func parser(_ parser: XMLParser, didEndElement name: String, namespaceURI: String?, qualifiedName: String?) {
         if name == "entry" {
             if Self.allowed(link), !title.isEmpty, title.count <= 500, items.count < 30, !items.contains(where: { $0.link == link }) {
-                items.append(MentalNewsItem(title: title, link: link, date: date))
+                items.append(MentalNewsItem(title: title, link: link, date: date, summary: summary))
             }
             entry = false
         }
@@ -79,14 +82,13 @@ final class MentalNewsParser: NSObject, XMLParserDelegate {
 
 struct MentalPublicResourcesView: View {
     @StateObject private var feed = MentalPublicFeed()
+    @State private var resource: MentalResource?
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("마음을 위한 지원과 자료").font(.title3.bold())
-            Link("내 지역 정신건강기관 찾기 ↗", destination: URL(string: "https://www.mentalhealth.go.kr/portal/health/fac/PotalHealthFacListTab1.do")!)
-            Link("심리상담 지원 안내 ↗", destination: URL(string: "https://www.hscity.go.kr/health/user/bbs/BD_selectBbs.do?q_bbsCode=1001&q_bbscttSn=20251223150332050")!)
-            Text("심리상담 바우처 안내 · 화성시 보건소. 거주지 담당기관에서 대상·비용·신청 가능 여부를 확인하세요.").font(.caption).foregroundStyle(.secondary)
-            Link("치료비 지원·마음건강 정보 ↗", destination: URL(string: "https://www.mentalhealth.go.kr/portal/main/index.do")!)
-            Text("문의 전에 준비해요: 거주 지역, 도움이 필요한 내용, 이용하고 싶은 상담·치료. 필요한 서류와 본인부담금은 담당기관에 확인하세요.").font(.caption).foregroundStyle(.secondary)
+            ForEach(MentalResource.support) { item in
+                Button { resource = item } label: { HStack { Image(systemName: "heart.text.square"); VStack(alignment: .leading, spacing: 5) { Text(item.title).font(.headline); Text(item.source).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right") }.padding(.vertical, 10) }.buttonStyle(.plain)
+            }
             Divider()
             HStack { Text("공식 정신건강 소식").font(.headline); Spacer(); Button("새로고침") { Task { await feed.refresh(force: true) } }.disabled(feed.loading) }
             Text("NIMH · 영어 원문 · 연구 소식은 개인 치료 지침이 아니에요.").font(.caption).foregroundStyle(.secondary)
@@ -95,10 +97,11 @@ struct MentalPublicResourcesView: View {
             if feed.items.isEmpty && !feed.loading { Text("새로 등록된 소식이 없어요.").font(.subheadline) }
             ForEach(feed.items.prefix(8)) { item in
                 if let url = URL(string: item.link) {
-                    Link(destination: url) { VStack(alignment: .leading, spacing: 4) { Text(item.title); if !item.date.isEmpty { Text(String(item.date.prefix(10))).font(.caption).foregroundStyle(.secondary) } }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8) }
+                    Button { resource = MentalResource(id: item.id, title: item.title, source: "NIMH · " + String(item.date.prefix(10)) + " · 영어 원문", body: item.summary?.isEmpty == false ? item.summary! : "이 소식은 제공된 본문 요약이 없어요. 공식 원문에서 내용을 확인할 수 있습니다.", url: url, aiAllowed: item.summary?.isEmpty == false) } label: { VStack(alignment: .leading, spacing: 4) { Text(item.title); if !item.date.isEmpty { Text(String(item.date.prefix(10))).font(.caption).foregroundStyle(.secondary) } }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8) }.buttonStyle(.plain)
                 }
             }
         }.padding(20).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
             .task { await feed.refresh() }
+            .sheet(item: $resource) { NativeMentalResourceDetail(resource: $0) }
     }
 }

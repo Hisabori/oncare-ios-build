@@ -2,7 +2,7 @@ import Foundation
 
 /// Fixed navigation destinations shared by the app and its widgets. No personal data goes in a URL.
 enum CareDestination: String, CaseIterable, Identifiable, Equatable {
-    case sleep = "sleep", workout = "workout", mood = "mood", connect = "connect"
+    case sleep = "sleep", workout = "workout", mood = "mood", connect = "connect", medication = "medication", articles = "articles", intelligence = "intelligence"
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -10,6 +10,9 @@ enum CareDestination: String, CaseIterable, Identifiable, Equatable {
         case .workout: return "운동 타이머"
         case .mood: return "마음 기록"
         case .connect: return "건강 연결"
+        case .medication: return "투약 확인"
+        case .articles: return "마음 읽을거리"
+        case .intelligence: return "기록 인사이트"
         }
     }
     var symbol: String {
@@ -18,6 +21,9 @@ enum CareDestination: String, CaseIterable, Identifiable, Equatable {
         case .workout: return "figure.walk"
         case .mood: return "heart.text.square.fill"
         case .connect: return "arrow.triangle.2.circlepath"
+        case .medication: return "pills.fill"
+        case .articles: return "book.closed.fill"
+        case .intelligence: return "sparkles"
         }
     }
     var url: URL { URL(string: "oncare://open/" + rawValue)! }
