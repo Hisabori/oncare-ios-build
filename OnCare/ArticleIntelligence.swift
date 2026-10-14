@@ -10,8 +10,15 @@ extension View {
 
 struct ArticleIntelligencePanel: View {
     let text: String
+    @State private var expanded = false
     var body: some View {
-        if #available(iOS 26.0, *) { ArticleIntelligenceContent(text: text) }
+        if #available(iOS 26.0, *) {
+            DisclosureGroup(isExpanded: $expanded) {
+                ArticleIntelligenceContent(text: text).padding(.top, 12)
+            } label: {
+                Label("AI 읽기 도움", systemImage: "sparkles").font(.headline).frame(minHeight: 44)
+            }
+        }
     }
 }
 @available(iOS 26.0, *)

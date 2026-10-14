@@ -9,10 +9,12 @@ final class ArticleFlowTests: XCTestCase {
         let app = XCUIApplication(); app.launch()
         app.tabBars.buttons["읽을거리"].tap()
         XCTAssertTrue(app.staticTexts["나를 알아가는 시간"].waitForExistence(timeout: 5))
+        app.buttons["articles-preferences"].tap()
         let interest = app.buttons["interest-마음"]
         if interest.value as? String != "선택됨" { interest.tap() }
         XCTAssertEqual(interest.value as? String, "선택됨")
         try screenshot("17-articles-library")
+        app.buttons["articles-preferences"].tap()
         let tile = app.buttons["article-mind-five"]
         for _ in 0..<5 { if tile.isHittable { break }; app.scrollViews.firstMatch.swipeUp() }
         XCTAssertTrue(tile.exists); tile.tap()
@@ -24,11 +26,14 @@ final class ArticleFlowTests: XCTestCase {
         try screenshot("18-article-detail")
         app.buttons["article-close"].tap()
         app.terminate(); app.launch(); app.tabBars.buttons["읽을거리"].tap()
+        app.buttons["articles-preferences"].tap()
         XCTAssertEqual(app.buttons["interest-마음"].value as? String, "선택됨")
+        app.buttons["articles-preferences"].tap()
         let filter = app.segmentedControls["articles-filter"]
         for _ in 0..<4 { if filter.isHittable { break }; app.scrollViews.firstMatch.swipeUp() }
         filter.buttons["저장한 글"].tap()
         XCTAssertTrue(app.buttons["article-mind-five"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["국립정신건강센터 소식지"].exists)
         try screenshot("19-articles-saved")
     }
 }

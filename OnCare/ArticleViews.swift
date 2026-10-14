@@ -56,6 +56,8 @@ struct ArticleLibraryView: View {
     @State private var selected: HealthArticle?
     @State private var savedOnly = false
     @State private var search = ""
+    @State private var showPublic = false
+    @State private var showPreferences = false
     private var recommendations: [ArticleRecommendation] {
         library.recommendations(entries: journal.entries).filter {
             (!savedOnly || library.saved.contains($0.id)) && (search.isEmpty || ($0.article.title + $0.article.subtitle + $0.article.topic.rawValue).localizedCaseInsensitiveContains(search))
@@ -66,9 +68,20 @@ struct ArticleLibraryView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) { Text("나를 알아가는 시간").font(.largeTitle.bold()); Text("믿을 수 있는 자료, 일상에 닿는 이야기.").font(.subheadline).foregroundStyle(.secondary) }
-                    preferences
-                    MentalPublicResourcesView()
-                    NCMHLibraryView()
+                    Button { showPublic = true } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "books.vertical.fill").font(.title2).foregroundStyle(Palette.teal)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("마음건강 공공 자료").font(.headline).foregroundStyle(.primary)
+                                Text("지원 안내 · NIMH 소식 · 국립정신건강센터").font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer(); Image(systemName: "chevron.right").foregroundStyle(.secondary)
+                        }.careCard()
+                    }.buttonStyle(.plain).accessibilityIdentifier("articles-public")
+                    Button { withAnimation { showPreferences.toggle() } } label: {
+                        HStack { Label("추천 설정", systemImage: "slider.horizontal.3"); Spacer(); Image(systemName: showPreferences ? "chevron.up" : "chevron.down") }.font(.subheadline.weight(.semibold)).frame(minHeight: 44)
+                    }.accessibilityIdentifier("articles-preferences").accessibilityValue(showPreferences ? "펼쳐짐" : "접힘")
+                    if showPreferences { preferences }
                     Picker("읽을거리", selection: $savedOnly) { Text("추천").tag(false); Text("저장한 글").tag(true) }.pickerStyle(.segmented).accessibilityIdentifier("articles-filter")
                     if recommendations.isEmpty {
                         VStack(spacing: 12) { Image(systemName: savedOnly ? "bookmark" : "magnifyingglass").font(.largeTitle).foregroundStyle(Palette.purple); Text(savedOnly ? "간직하고 싶은 글을 저장해보세요" : "다른 단어로 찾아보세요").font(.headline) }.frame(maxWidth: .infinity).padding(.vertical, 28).accessibilityIdentifier("articles-empty")
@@ -79,9 +92,10 @@ struct ArticleLibraryView: View {
                     Text("공공 의료기관 NHS 자료를 온케어가 한국어로 정리한 \(HealthArticle.catalog.count)편의 큐레이션이에요. 원문은 영어이며, 일반적인 건강 정보입니다. 자동으로 최신 글을 가져오지는 않아요.").font(.caption).foregroundStyle(.secondary)
                 }.padding(22)
             }.background(Color(.systemGroupedBackground)).navigationTitle("읽을거리").navigationBarTitleDisplayMode(.inline)
-                .searchable(text: $search, prompt: "주제나 제목 검색")
+                .searchable(text: $search, prompt: "한국어 건강 이야기 검색")
                 .toolbar { if isSheet { ToolbarItem(placement: .navigationBarTrailing) { Button("닫기") { dismiss() } } } }
                 .sheet(item: $selected) { ArticleDetailView(article: $0) }
+                .sheet(isPresented: $showPublic) { PublicArticleLibraryView() }
         }
     }
     private var preferences: some View {
@@ -117,7 +131,6 @@ struct ArticleDetailView: View {
                         Text(article.subtitle).font(.title3).foregroundStyle(.secondary)
                     }
                     Text(article.summary).font(.body).lineSpacing(6)
-                    ArticleIntelligencePanel(text: article.summary + "\n" + article.takeaways.joined(separator: "\n"))
                     VStack(alignment: .leading, spacing: 16) {
                         Text("기억해두면 좋은 것").font(.title3.bold())
                         ForEach(Array(article.takeaways.enumerated()), id: \.offset) { index, takeaway in
@@ -125,6 +138,7 @@ struct ArticleDetailView: View {
                         }
                     }.careCard()
                     VStack(alignment: .leading, spacing: 10) { Label("오늘, 하나만", systemImage: "sparkle").font(.headline).foregroundStyle(article.topic.color); Text(article.action).lineSpacing(4) }.careCard()
+                    ArticleIntelligencePanel(text: article.summary + "\n" + article.takeaways.joined(separator: "\n"))
                     sourceCard
                 }.padding(22)
             }.background(Color(.systemGroupedBackground)).navigationTitle("건강 이야기").navigationBarTitleDisplayMode(.inline)
@@ -150,3 +164,22 @@ struct ArticleSourceView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> SFSafariViewController { SFSafariViewController(url: url) }
     func updateUIViewController(_ controller: SFSafariViewController, context: Context) {}
 }
+
+struct PublicArticleLibraryView: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    Text("도움이 필요할 때, 믿을 수 있는 곳에서").font(.title2.bold())
+                    Text("지원 안내와 기관에서 공개한 소식·자료를 모았어요. 새 자료를 가져오려면 인터넷 연결이 필요해요.").font(.subheadline).foregroundStyle(.secondary)
+                    MentalPublicResourcesView()
+                    NCMHLibraryView()
+                }.padding(22)
+            }.background(Color(.systemGroupedBackground)).navigationTitle("마음건강 공공 자료")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("닫기") { dismiss() } } }
+        }
+    }
+}
+
