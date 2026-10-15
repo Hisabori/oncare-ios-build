@@ -5,7 +5,7 @@ import Foundation
     @available(iOS 16.2, *)
     static func state(for session: WorkoutSession, at now: Date) throws -> CareWorkoutAttributes.ContentState {
         let elapsed = try session.elapsed(at: now)
-        let start = now.addingTimeInterval(-elapsed)
+        let start = session.segmentStartedAt.map { $0.addingTimeInterval(-session.elapsedSeconds) } ?? session.checkpointAt.addingTimeInterval(-elapsed)
         return CareWorkoutAttributes.ContentState(running: session.running, elapsedSeconds: Int(elapsed), timerStart: start, timerEnd: start.addingTimeInterval(86400))
     }
     private static var pending: Task<Void, Never>?
@@ -27,7 +27,7 @@ import Foundation
                 if activity.attributes.sessionID == session.id, matching == nil { matching = activity }
                 else { await activity.end(nil, dismissalPolicy: .immediate) }
             }
-            if let matching { await matching.update(content) }
+            if let matching { if matching.content.state.running != state.running || matching.content.state.timerStart != state.timerStart || (!state.running && matching.content.state.elapsedSeconds != state.elapsedSeconds) { await matching.update(content) } }
             else if ActivityAuthorizationInfo().areActivitiesEnabled {
                 _ = try? Activity.request(attributes: CareWorkoutAttributes(sessionID: session.id, goalMinutes: session.goalMinutes), content: content, pushType: nil)
             }

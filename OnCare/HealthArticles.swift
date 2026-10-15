@@ -89,7 +89,7 @@ enum ArticleRecommender {
     @Published private(set) var interests: Set<ArticleTopic>
     @Published private(set) var saved: Set<String>
     @Published private(set) var read: Set<String>
-    @Published var useRecords: Bool { didSet { defaults.set(useRecords, forKey: prefix + "records") } }
+    @Published var useRecords: Bool { didSet { if useRecords != oldValue { defaults.set(useRecords, forKey: prefix + "records") } } }
     private let defaults: UserDefaults
     private let prefix = "care-articles-v1."
     init(defaults: UserDefaults = .standard) {
@@ -110,7 +110,7 @@ enum ArticleRecommender {
         defaults.set(saved.sorted(), forKey: prefix + "saved")
     }
     func markRead(_ id: String) {
-        guard HealthArticle.catalog.contains(where: { $0.id == id }) else { return }
+        guard HealthArticle.catalog.contains(where: { $0.id == id }), !read.contains(id) else { return }
         read.insert(id); defaults.set(read.sorted(), forKey: prefix + "read")
     }
     func recommendations(entries: [Entry]) -> [ArticleRecommendation] {

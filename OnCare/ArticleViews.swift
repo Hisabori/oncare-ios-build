@@ -83,6 +83,11 @@ struct ArticleLibraryView: View {
                     }.accessibilityIdentifier("articles-preferences").accessibilityValue(showPreferences ? "펼쳐짐" : "접힘")
                     if showPreferences { preferences }
                     Picker("읽을거리", selection: $savedOnly) { Text("추천").tag(false); Text("저장한 글").tag(true) }.pickerStyle(.segmented).accessibilityIdentifier("articles-filter")
+                    HStack {
+                        Text("\(recommendations.count)편" + (savedOnly ? " · 저장한 글" : " · 추천 글")).font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("articles-result-count")
+                        Spacer()
+                        if !search.isEmpty || savedOnly { Button("필터 초기화") { search = ""; savedOnly = false }.font(.caption).frame(minHeight: 44).accessibilityIdentifier("articles-clear-filters") }
+                    }
                     if recommendations.isEmpty {
                         VStack(spacing: 12) { Image(systemName: savedOnly ? "bookmark" : "magnifyingglass").font(.largeTitle).foregroundStyle(Palette.purple); Text(savedOnly ? "간직하고 싶은 글을 저장해보세요" : "다른 단어로 찾아보세요").font(.headline) }.frame(maxWidth: .infinity).padding(.vertical, 28).accessibilityIdentifier("articles-empty")
                     }
@@ -130,7 +135,7 @@ struct ArticleDetailView: View {
                         Text(article.title).font(.largeTitle.bold()).accessibilityIdentifier("article-title")
                         Text(article.subtitle).font(.title3).foregroundStyle(.secondary)
                     }
-                    Text(article.summary).font(.body).lineSpacing(6)
+                    Text(article.summary).font(.body).lineSpacing(6).textSelection(.enabled)
                     VStack(alignment: .leading, spacing: 16) {
                         Text("기억해두면 좋은 것").font(.title3.bold())
                         ForEach(Array(article.takeaways.enumerated()), id: \.offset) { index, takeaway in
