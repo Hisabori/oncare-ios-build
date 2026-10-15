@@ -113,7 +113,19 @@ enum ArticleRecommender {
         guard HealthArticle.catalog.contains(where: { $0.id == id }), !read.contains(id) else { return }
         read.insert(id); defaults.set(read.sorted(), forKey: prefix + "read")
     }
+    func markUnread(_ id: String) {
+        guard read.contains(id) else { return }
+        read.remove(id); defaults.set(read.sorted(), forKey: prefix + "read")
+    }
     func recommendations(entries: [Entry]) -> [ArticleRecommendation] {
         ArticleRecommender.recommendations(interests: interests, recentKinds: useRecords ? ArticleRecommender.recentKinds(entries: entries) : [], read: read)
+    }
+}
+
+enum ArticleSearch {
+    static func matches(_ article: HealthArticle, query: String) -> Bool {
+        let words = query.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        let content = ([article.title, article.subtitle, article.topic.rawValue, article.summary, article.action] + article.takeaways).joined(separator: " ")
+        return words.allSatisfy { content.localizedCaseInsensitiveContains($0) }
     }
 }

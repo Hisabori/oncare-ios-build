@@ -55,12 +55,13 @@ struct ArticleLibraryView: View {
     var isSheet = false
     @State private var selected: HealthArticle?
     @State private var savedOnly = false
+    @State private var unreadOnly = false
     @State private var search = ""
     @State private var showPublic = false
     @State private var showPreferences = false
     private var recommendations: [ArticleRecommendation] {
         library.recommendations(entries: journal.entries).filter {
-            (!savedOnly || library.saved.contains($0.id)) && (search.isEmpty || ($0.article.title + $0.article.subtitle + $0.article.topic.rawValue).localizedCaseInsensitiveContains(search))
+            (!savedOnly || library.saved.contains($0.id)) && (!unreadOnly || !library.read.contains($0.id)) && ArticleSearch.matches($0.article, query: search)
         }
     }
     var body: some View {
@@ -83,13 +84,14 @@ struct ArticleLibraryView: View {
                     }.accessibilityIdentifier("articles-preferences").accessibilityValue(showPreferences ? "펼쳐짐" : "접힘")
                     if showPreferences { preferences }
                     Picker("읽을거리", selection: $savedOnly) { Text("추천").tag(false); Text("저장한 글").tag(true) }.pickerStyle(.segmented).accessibilityIdentifier("articles-filter")
+                    Toggle("아직 안 읽은 글만", isOn: $unreadOnly).font(.subheadline).accessibilityIdentifier("articles-unread")
                     HStack {
                         Text("\(recommendations.count)편" + (savedOnly ? " · 저장한 글" : " · 추천 글")).font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("articles-result-count")
                         Spacer()
-                        if !search.isEmpty || savedOnly { Button("필터 초기화") { search = ""; savedOnly = false }.font(.caption).frame(minHeight: 44).accessibilityIdentifier("articles-clear-filters") }
+                        if !search.isEmpty || savedOnly || unreadOnly { Button("필터 초기화") { search = ""; savedOnly = false; unreadOnly = false }.font(.caption).frame(minHeight: 44).accessibilityIdentifier("articles-clear-filters") }
                     }
                     if recommendations.isEmpty {
-                        VStack(spacing: 12) { Image(systemName: savedOnly ? "bookmark" : "magnifyingglass").font(.largeTitle).foregroundStyle(Palette.purple); Text(savedOnly ? "간직하고 싶은 글을 저장해보세요" : "다른 단어로 찾아보세요").font(.headline) }.frame(maxWidth: .infinity).padding(.vertical, 28).accessibilityIdentifier("articles-empty")
+                        VStack(spacing: 12) { Image(systemName: savedOnly ? "bookmark" : "magnifyingglass").font(.largeTitle).foregroundStyle(Palette.purple); Text(!search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || unreadOnly ? "검색어나 필터를 바꿔보세요" : savedOnly ? "간직하고 싶은 글을 저장해보세요" : "다른 단어로 찾아보세요").font(.headline) }.frame(maxWidth: .infinity).padding(.vertical, 28).accessibilityIdentifier("articles-empty")
                     }
                     ForEach(recommendations) { recommendation in
                         Button { selected = recommendation.article } label: { ArticleTile(recommendation: recommendation) }.buttonStyle(.plain).accessibilityIdentifier("article-" + recommendation.id)
@@ -97,7 +99,7 @@ struct ArticleLibraryView: View {
                     Text("공공 의료기관 NHS 자료를 온케어가 한국어로 정리한 \(HealthArticle.catalog.count)편의 큐레이션이에요. 원문은 영어이며, 일반적인 건강 정보입니다. 자동으로 최신 글을 가져오지는 않아요.").font(.caption).foregroundStyle(.secondary)
                 }.padding(22)
             }.background(Color(.systemGroupedBackground)).navigationTitle("읽을거리").navigationBarTitleDisplayMode(.inline)
-                .searchable(text: $search, prompt: "한국어 건강 이야기 검색")
+                .searchable(text: $search, prompt: "제목·본문 검색 (예: 수면 카페인)")
                 .toolbar { if isSheet { ToolbarItem(placement: .navigationBarTrailing) { Button("닫기") { dismiss() } } } }
                 .sheet(item: $selected) { ArticleDetailView(article: $0) }
                 .sheet(isPresented: $showPublic) { PublicArticleLibraryView() }
@@ -144,6 +146,7 @@ struct ArticleDetailView: View {
                     }.careCard()
                     VStack(alignment: .leading, spacing: 10) { Label("오늘, 하나만", systemImage: "sparkle").font(.headline).foregroundStyle(article.topic.color); Text(article.action).lineSpacing(4) }.careCard()
                     ArticleIntelligencePanel(text: article.summary + "\n" + article.takeaways.joined(separator: "\n"))
+                    Button("나중에 다시 읽기 · 읽지 않음으로 표시") { library.markUnread(article.id); dismiss() }.frame(minHeight: 44).accessibilityIdentifier("article-mark-unread")
                     sourceCard
                 }.padding(22)
             }.background(Color(.systemGroupedBackground)).navigationTitle("건강 이야기").navigationBarTitleDisplayMode(.inline)
