@@ -1,4 +1,5 @@
 name: Build research-capable unsigned IPA
+# Local research weights are added only after this source-only build is tested.
 on:
   workflow_dispatch:
   push:
