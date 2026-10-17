@@ -26,6 +26,7 @@ struct SleepPlan: Codable, Equatable {
 struct SleepRoutineView: View {
     @EnvironmentObject var journal: Journal
     @Environment(\.dismiss) private var dismiss
+    @State private var showSound = false
     @State private var mode = 0
     @StateObject private var tracking = SleepTrackingStore()
     @Environment(\.scenePhase) private var scenePhase
@@ -54,6 +55,7 @@ struct SleepRoutineView: View {
                     ToolbarItem(placement: .cancellationAction) { Button("닫기") { dismiss() } }
                     ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("완료") { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) } }
                 }
+                .sheet(isPresented: $showSound) { SleepSoundView() }
                 .onAppear(perform: configureWake)
                 .onChange(of: mode) { _ in clearMessages() }
                 .onDisappear(perform: checkpointTracking)
@@ -66,6 +68,7 @@ struct SleepRoutineView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 Text("내 생활에 맞춘 수면 루틴").font(.largeTitle.bold())
+                Button { showSound = true } label: { Label("마이크로 수면 소리 기록", systemImage: "waveform").frame(minHeight: 44) }.accessibilityIdentifier("sleep-sound-open")
                 Picker("수면 도구", selection: $mode) { Text("취침 계산").tag(0); Text("수면 기록").tag(1); Text("수면 분석").tag(2) }.pickerStyle(.segmented).accessibilityIdentifier("sleep-mode")
                 if mode == 0 { planner } else if mode == 1 { logger } else { SleepInsightsView(entries: journal.entries, goal: journal.goals.sleep, now: now) }
                 if !message.isEmpty { Text(message).font(.subheadline).foregroundStyle(Palette.purple).accessibilityIdentifier("sleep-message") }

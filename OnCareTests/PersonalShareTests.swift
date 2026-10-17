@@ -26,5 +26,5 @@ final class PersonalShareTests: XCTestCase {
         XCTAssertThrowsError(try SyncPair.decode("https://example.com")); XCTAssertThrowsError(try SyncPair.decode("oncare1:" + String(repeating: "a", count: 2049)))
         var bad = pair; bad.host = "8.8.8.8"; XCTAssertThrowsError(try bad.validate())
     }
-    func testInstalledVersion() { XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String, "3.21.0"); XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String, "34") }
+    func testInstalledVersion() { XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String, "3.22.0"); XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String, "35") }
 }

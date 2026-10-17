@@ -38,6 +38,8 @@ targets:
           - UIApplicationShortcutItemType: app.oncare.open.connect
             UIApplicationShortcutItemTitle: 건강 연결
             UIApplicationShortcutItemIconSymbolName: arrow.triangle.2.circlepath
+        NSMicrophoneUsageDescription: 수면 중 소리 크기를 기기 안에서 요약할 때만 마이크를 사용하며 원음은 저장하지 않습니다.
+        UIBackgroundModes: [audio]
         NSCameraUsageDescription: Android 온케어의 연결 QR을 읽을 때만 카메라를 사용합니다.
         NSLocalNetworkUsageDescription: 같은 Wi-Fi의 내 Android 온케어에서 건강 기록을 안전하게 가져옵니다.
         NSAppTransportSecurity:
@@ -47,8 +49,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: app.oncare.personal
         PRODUCT_NAME: OnCare
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MARKETING_VERSION: "3.21.0"
-        CURRENT_PROJECT_VERSION: "34"
+        MARKETING_VERSION: "3.22.0"
+        CURRENT_PROJECT_VERSION: "35"
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: "온케어 3"
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.healthcare-fitness"
@@ -76,8 +78,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.oncare.personal.live
-        MARKETING_VERSION: "3.21.0"
-        CURRENT_PROJECT_VERSION: "34"
+        MARKETING_VERSION: "3.22.0"
+        CURRENT_PROJECT_VERSION: "35"
         GENERATE_INFOPLIST_FILE: "YES"
         APPLICATION_EXTENSION_API_ONLY: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: "온케어 위젯"
