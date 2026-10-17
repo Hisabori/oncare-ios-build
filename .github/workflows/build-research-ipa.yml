@@ -1,6 +1,6 @@
 name: Build research-capable unsigned IPA
 # Local research weights are added only after this source-only build is tested.
-# Expected installed version: 3.24.0, build 37.
+# Expected installed version: 3.25.0, build 37.
 on:
   workflow_dispatch:
   push:
@@ -44,18 +44,18 @@ jobs:
           mkdir -p package/Payload
           cp -R build/Build/Products/Release-iphoneos/OnCare.app package/Payload/
           cd package
-          zip -qry ../OnCare-v3.24-source-only-unsigned.ipa Payload
+          zip -qry ../OnCare-v3.25-source-only-unsigned.ipa Payload
           cd ..
-          python3 ci/verify_ipa.py OnCare-v3.24-source-only-unsigned.ipa
+          python3 ci/verify_ipa.py OnCare-v3.25-source-only-unsigned.ipa
       - uses: actions/upload-artifact@v4
         with:
-          name: OnCare-v3.24-source-only-unsigned-ipa
-          path: OnCare-v3.24-source-only-unsigned.ipa
+          name: OnCare-v3.25-source-only-unsigned-ipa
+          path: OnCare-v3.25-source-only-unsigned.ipa
           if-no-files-found: error
           retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: OnCare-v3.24-research-build-logs
+          name: OnCare-v3.25-research-build-logs
           path: ios-research-*.log
           retention-days: 7
