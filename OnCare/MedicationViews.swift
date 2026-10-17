@@ -8,6 +8,7 @@ struct MedicationView: View {
     @State private var deleting: MedicationPlan?
     @State private var now = Date()
     @State private var showHistory = false
+    @State private var todayFilter = 0
     @State private var showBackup = false
     @Environment(\.scenePhase) private var phase
     private let clock = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
@@ -22,7 +23,10 @@ struct MedicationView: View {
                     HStack { Button("복용 확인 기록") { showHistory = true }.accessibilityIdentifier("medication-history-open"); Spacer(); Button("투약 백업") { showBackup = true }.accessibilityIdentifier("medication-backup-open") }
                     SectionTitle(title: "오늘의 복용 일정")
                     if today.isEmpty { Text("오늘 예정된 일정이 없어요").foregroundStyle(.secondary).careCard() }
-                    ForEach(today) { plan in planCard(plan, today: true) }
+                    Picker("복용 확인 필터", selection: $todayFilter) { Text("전체").tag(0); Text("확인 전").tag(1); Text("확인 완료").tag(2) }.pickerStyle(.segmented).accessibilityIdentifier("medication-today-filter")
+                    let visible = today.filter { todayFilter == 0 || (todayFilter == 2) == store.checked($0.id, now: now) }
+                    if !today.isEmpty && visible.isEmpty { Text("이 조건에 맞는 일정이 없어요.").foregroundStyle(.secondary) }
+                    ForEach(visible) { plan in planCard(plan, today: true) }
                     SectionTitle(title: "등록한 일정 · \(store.state.plans.count) / 8")
                     CareButton(title: "복용 일정 추가", color: Palette.teal, filled: true, id: "medication-add") { editing = MedicationPlan(name: "", enabled: false) }.disabled(!store.readable || store.state.plans.count >= 8)
                     ForEach(store.state.plans) { plan in planCard(plan, today: false) }
@@ -64,6 +68,7 @@ struct MedicationView: View {
     private func planCard(_ plan: MedicationPlan, today: Bool) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) { Text(plan.timeLabel).font(.title2.bold()).foregroundStyle(Palette.teal); Spacer(); Text(today && store.checked(plan.id, now: now) ? "복용 확인됨" : plan.enabled ? "알림 켜짐" : "알림 꺼짐").font(.caption).foregroundStyle(.secondary) }
+            if today { Text(CareUpgrade.medicationPhase(hour: plan.hour, minute: plan.minute, checked: store.checked(plan.id, now: now), now: now)).font(.subheadline).foregroundStyle(Palette.teal) }
             Text(plan.name).font(.headline).accessibilityIdentifier("medication-name-" + plan.id)
             Text(plan.daysLabel).font(.caption).foregroundStyle(.secondary)
             if !plan.instructions.isEmpty { Text(plan.instructions).font(.subheadline).foregroundStyle(.secondary) }

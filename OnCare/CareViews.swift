@@ -114,6 +114,7 @@ struct MindView: View {
                         Text("지금의 마음은 어떤가요?").font(.headline); Text("감정을 고르고, 오늘의 이야기를 남겨보세요.").font(.subheadline).foregroundStyle(.secondary)
                         HStack { ForEach(1...5, id: \.self) { score in Button { mood = score } label: { VStack(spacing: 8) { MoodFace(score: score); Text(["힘듦", "지침", "보통", "좋음", "행복"][score-1]).font(.caption2).foregroundStyle(.secondary) }.frame(maxWidth: .infinity) }.buttonStyle(.plain).accessibilityIdentifier("mood-choice-\(score)") } }
                     }.careCard()
+                    MindRecoveryCard(entries: journal.entries, breathe: { sheet = .breathing }, write: { mood = 3 })
                     Picker("마음 기록 기간", selection: $moodDays) { Text("7일").tag(7); Text("30일").tag(30) }.pickerStyle(.segmented).accessibilityIdentifier("mood-period-filter")
                     SectionTitle(title: "최근 \(moodDays)일, 마음의 흐름")
                     VStack(alignment: .leading, spacing: 12) { Text(data.isEmpty ? "아직 기록이 없어요" : number(data.reduce(0) { $0 + $1.value } / Double(data.count)) + " / 5").font(.title.bold()); Text("하루 마지막 체크인 기준 · \(data.count)일 기록").font(.caption).foregroundStyle(.secondary); TrendChart(entries: data, kind: "마음") }.careCard()

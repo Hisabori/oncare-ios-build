@@ -132,6 +132,7 @@ struct SleepSoundView: View {
             if store.running || store.starting { Button("측정 종료") { store.stop() }.buttonStyle(.borderedProminent) }
             else { Button("마이크 소리 측정 시작") { store.start(threshold: threshold, research: research) }.buttonStyle(.borderedProminent).accessibilityIdentifier("sleep-sound-start") }
             Text(store.message).font(.subheadline).foregroundStyle(.secondary)
+            SleepSoundReviewCard(sessions: store.sessions)
             ForEach(store.sessions) { session in VStack(alignment: .leading, spacing: 10) {
                 Text(session.started.formatted(date: .abbreviated, time: .shortened)).font(.headline)
                 Text("측정 \(Int(session.measuredMinutes))분 · 기준 이상 \(Int(session.loudMinutes))분")

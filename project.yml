@@ -57,8 +57,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: app.oncare.personal
         PRODUCT_NAME: OnCare
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MARKETING_VERSION: "3.23.0"
-        CURRENT_PROJECT_VERSION: "36"
+        MARKETING_VERSION: "3.24.0"
+        CURRENT_PROJECT_VERSION: "37"
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: "온케어 3"
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.healthcare-fitness"
@@ -88,8 +88,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.oncare.personal.live
-        MARKETING_VERSION: "3.23.0"
-        CURRENT_PROJECT_VERSION: "36"
+        MARKETING_VERSION: "3.24.0"
+        CURRENT_PROJECT_VERSION: "37"
         GENERATE_INFOPLIST_FILE: "YES"
         APPLICATION_EXTENSION_API_ONLY: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: "온케어 위젯"
