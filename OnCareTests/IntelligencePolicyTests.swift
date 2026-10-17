@@ -14,7 +14,8 @@ final class IntelligencePolicyTests: XCTestCase {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         let journal = Journal(directory: directory)
-        let now = Date()
+        // Both records are valid when stored; the second is future relative to the requested snapshot.
+        let now = Date().addingTimeInterval(-7200)
         XCTAssertTrue(journal.save(Entry(date: now.addingTimeInterval(-60), kind: "운동", value: 20, note: "PRIVATE")))
         XCTAssertTrue(journal.save(Entry(date: dayOffset(-15, from: now), kind: "운동", value: 30)))
         XCTAssertTrue(journal.save(Entry(date: dayOffset(-35, from: now), kind: "운동", value: 40)))
