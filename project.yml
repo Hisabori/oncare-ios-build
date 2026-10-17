@@ -1,5 +1,9 @@
 name: OnCare
 options:
+  fileTypes:
+    onnx:
+      file: true
+      buildPhase: resources
   deploymentTarget:
     iOS: "16.0"
 settings:
@@ -18,10 +22,6 @@ targets:
     platform: iOS
     sources:
       - path: OnCare
-        excludes: [research-sleep.onnx]
-      - path: OnCare/research-sleep.onnx
-        optional: true
-        buildPhase: resources
       - path: Shared
     info:
       path: OnCare/Info.plist
