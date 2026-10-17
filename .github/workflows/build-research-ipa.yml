@@ -1,0 +1,59 @@
+name: Build research-capable unsigned IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/build-research-ipa.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require source-only checkout
+        run: |
+          test ! -f OnCare/research-sleep.onnx
+          test ! -d signing-store
+      - name: Select Xcode
+        run: |
+          XCODE=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort | tail -1)
+          test -n "$XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+      - name: Compile iPhone application
+        run: |
+          set -o pipefail
+          xcodebuild -project OnCare.xcodeproj -scheme OnCare -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build | tee ios-research-build.log
+      - name: Verify application and native analysis unit tests
+        run: |
+          set -o pipefail
+          SIM_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(v["udid"] for k in sorted(d,reverse=True) if "iOS" in k for v in d[k] if "iPhone" in v["name"]))')
+          xcrun simctl boot "$SIM_ID" || true
+          xcrun simctl bootstatus "$SIM_ID" -b
+          xcodebuild test -project OnCare.xcodeproj -scheme OnCare -configuration Debug -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath simulator-build -parallel-testing-enabled NO -only-testing:OnCareTests CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO | tee ios-research-tests.log
+      - name: Package source-only unsigned app
+        run: |
+          mkdir -p package/Payload
+          cp -R build/Build/Products/Release-iphoneos/OnCare.app package/Payload/
+          cd package
+          zip -qry ../OnCare-v3.23-source-only-unsigned.ipa Payload
+          cd ..
+          python3 ci/verify_ipa.py OnCare-v3.23-source-only-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OnCare-v3.23-source-only-unsigned-ipa
+          path: OnCare-v3.23-source-only-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: OnCare-v3.23-research-build-logs
+          path: ios-research-*.log
+          retention-days: 7
