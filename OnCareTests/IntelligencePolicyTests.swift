@@ -12,6 +12,7 @@ final class IntelligencePolicyTests: XCTestCase {
     }
     @MainActor func testThirtyDayContextExcludesFutureAndPrivateText() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let journal = Journal(directory: directory)
         // Both records are valid when stored; the second is future relative to the requested snapshot.
@@ -30,6 +31,7 @@ final class IntelligencePolicyTests: XCTestCase {
     }
     @MainActor func testMissingDaysAreNotZeroMoodValues() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let journal = Journal(directory: directory)
         let now = Date()
