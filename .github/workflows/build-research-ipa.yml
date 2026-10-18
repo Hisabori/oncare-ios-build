@@ -1,6 +1,6 @@
 name: Build research-capable unsigned IPA
 # Local research weights are added only after this source-only build is tested.
-# Expected installed version: 3.25.0, build 37.
+# Expected installed version: 3.25.0, build 38. Includes private reflection regression tests.
 on:
   workflow_dispatch:
   push:
