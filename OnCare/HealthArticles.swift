@@ -89,6 +89,8 @@ enum ArticleRecommender {
     @Published private(set) var interests: Set<ArticleTopic>
     @Published private(set) var saved: Set<String>
     @Published private(set) var read: Set<String>
+    @Published private(set) var recent: [String]
+    @Published var keepRecent: Bool { didSet { defaults.set(keepRecent, forKey: prefix + "keep-recent"); if !keepRecent { clearRecent() } } }
     @Published var useRecords: Bool { didSet { if useRecords != oldValue { defaults.set(useRecords, forKey: prefix + "records") } } }
     private let defaults: UserDefaults
     private let prefix = "care-articles-v1."
@@ -98,6 +100,9 @@ enum ArticleRecommender {
         let ids = Set(HealthArticle.catalog.map(\.id))
         saved = Set(defaults.stringArray(forKey: "care-articles-v1.saved") ?? []).intersection(ids)
         read = Set(defaults.stringArray(forKey: "care-articles-v1.read") ?? []).intersection(ids)
+        let historyEnabled = defaults.object(forKey: "care-articles-v1.keep-recent") as? Bool ?? true
+        keepRecent = historyEnabled
+        recent = historyEnabled ? ArticleHistory.normalized(defaults.stringArray(forKey: "care-articles-v1.recent") ?? [], known: ids) : []
         useRecords = defaults.object(forKey: "care-articles-v1.records") as? Bool ?? false
     }
     func toggleInterest(_ topic: ArticleTopic) {
@@ -113,6 +118,13 @@ enum ArticleRecommender {
         guard HealthArticle.catalog.contains(where: { $0.id == id }), !read.contains(id) else { return }
         read.insert(id); defaults.set(read.sorted(), forKey: prefix + "read")
     }
+    func recordOpened(_ id: String) {
+        let ids = Set(HealthArticle.catalog.map(\.id))
+        guard keepRecent, ids.contains(id) else { return }
+        recent = ArticleHistory.normalized([id] + recent, known: ids)
+        defaults.set(recent, forKey: prefix + "recent")
+    }
+    func clearRecent() { recent = []; defaults.removeObject(forKey: prefix + "recent") }
     func markUnread(_ id: String) {
         guard read.contains(id) else { return }
         read.remove(id); defaults.set(read.sorted(), forKey: prefix + "read")

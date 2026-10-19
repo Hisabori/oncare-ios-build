@@ -69,6 +69,7 @@ struct ArticleLibraryView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) { Text("나를 알아가는 시간").font(.largeTitle.bold()); Text("믿을 수 있는 자료, 일상에 닿는 이야기.").font(.subheadline).foregroundStyle(.secondary) }
+                    ArticleRecentSection { selected = $0 }
                     Button { showPublic = true } label: {
                         HStack(spacing: 14) {
                             Image(systemName: "books.vertical.fill").font(.title2).foregroundStyle(Palette.teal)
@@ -153,7 +154,7 @@ struct ArticleDetailView: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) { Button("닫기") { dismiss() }.accessibilityIdentifier("article-close") }
                     ToolbarItem(placement: .navigationBarTrailing) { Button { library.toggleSaved(article.id) } label: { Image(systemName: library.saved.contains(article.id) ? "bookmark.fill" : "bookmark") }.accessibilityLabel(library.saved.contains(article.id) ? "저장 취소" : "글 저장").accessibilityIdentifier("article-save") }
-                }.onAppear { library.markRead(article.id) }
+                }.onAppear { library.recordOpened(article.id); library.markRead(article.id) }
                 .sheet(isPresented: $showSource) { if let url = article.sourceURL { ArticleSourceView(url: url).ignoresSafeArea() } }
         }
     }
