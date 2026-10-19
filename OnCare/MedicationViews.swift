@@ -9,6 +9,7 @@ struct MedicationView: View {
     @State private var now = Date()
     @State private var showHistory = false
     @State private var todayFilter = 0
+    @State private var query = ""
     @State private var showBackup = false
     @Environment(\.scenePhase) private var phase
     private let clock = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
@@ -24,15 +25,18 @@ struct MedicationView: View {
                     SectionTitle(title: "오늘의 복용 일정")
                     if today.isEmpty { Text("오늘 예정된 일정이 없어요").foregroundStyle(.secondary).careCard() }
                     Picker("복용 확인 필터", selection: $todayFilter) { Text("전체").tag(0); Text("확인 전").tag(1); Text("확인 완료").tag(2) }.pickerStyle(.segmented).accessibilityIdentifier("medication-today-filter")
-                    let visible = today.filter { todayFilter == 0 || (todayFilter == 2) == store.checked($0.id, now: now) }
-                    if !today.isEmpty && visible.isEmpty { Text("이 조건에 맞는 일정이 없어요.").foregroundStyle(.secondary) }
+                    let visible = today.filter { (todayFilter == 0 || (todayFilter == 2) == store.checked($0.id, now: now)) && MedicationAgenda.matches($0, query: query) }
+                    if !today.isEmpty && visible.isEmpty { VStack(alignment: .leading, spacing: 10) { Text("이 조건에 맞는 일정이 없어요.").foregroundStyle(.secondary); Button("검색·필터 초기화") { query = ""; todayFilter = 0 } }.careCard() }
                     ForEach(visible) { plan in planCard(plan, today: true) }
                     SectionTitle(title: "등록한 일정 · \(store.state.plans.count) / 8")
                     CareButton(title: "복용 일정 추가", color: Palette.teal, filled: true, id: "medication-add") { editing = MedicationPlan(name: "", enabled: false) }.disabled(!store.readable || store.state.plans.count >= 8)
-                    ForEach(store.state.plans) { plan in planCard(plan, today: false) }
+                    let registered = store.state.plans.filter { MedicationAgenda.matches($0, query: query) }
+                    if registered.isEmpty && !store.state.plans.isEmpty { Text("등록한 일정에 검색 결과가 없어요.").foregroundStyle(.secondary) }
+                    ForEach(registered) { plan in planCard(plan, today: false) }
                     Text("한 일정에 한 복용 시간을 등록해요. 하루 여러 번이면 일정을 각각 추가하세요. 복용 확인은 오늘의 기록이며 알림 시간을 바꾸지 않습니다. 투약 백업에서 일정과 확인 기록을 별도로 저장하고 옮길 수 있어요. 건강 기록 백업·자동 동기화와는 별도입니다.").font(.caption).foregroundStyle(.secondary)
                 }.padding(22)
             }.background(Color(.systemGroupedBackground)).navigationTitle("투약 알림").navigationBarTitleDisplayMode(.inline)
+                .searchable(text: $query, prompt: "약 이름·복용 방법 검색")
                 .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("닫기") { dismiss() } } }
                 .sheet(item: $editing) { MedicationEditor(plan: $0) }
                 .sheet(isPresented: $showHistory) { MedicationHistoryView() }
@@ -48,11 +52,15 @@ struct MedicationView: View {
     private var progressCard: some View {
         let checked = today.filter { store.checked($0.id, now: now) }.count
         let pending = today.filter { !store.checked($0.id, now: now) }
+        let agenda = MedicationAgenda.summary(today, checked: Set(today.filter { store.checked($0.id, now: now) }.map(\.id)), now: now)
         return VStack(alignment: .leading, spacing: 12) {
             Label("오늘의 복용 확인", systemImage: "pills.fill").font(.headline).foregroundStyle(Palette.teal)
             Text("\(checked) / \(today.count)개 확인").font(.title.bold())
             if !today.isEmpty { ProgressView(value: Double(checked), total: Double(today.count)).tint(Palette.teal) }
-            Text(pending.first.map { "남은 첫 일정 · " + $0.timeLabel + " · " + $0.name } ?? (today.isEmpty ? "등록한 요일에 맞춰 일정이 표시돼요." : "오늘 일정의 복용 확인을 모두 남겼어요.")).font(.subheadline)
+            if let next = agenda.next { Text("다음 예정 · " + next.timeLabel + " · " + next.name).font(.subheadline) }
+            else { Text(today.isEmpty ? "등록한 요일에 맞춰 일정이 표시돼요." : pending.isEmpty ? "오늘 일정의 복용 확인을 모두 남겼어요." : "오늘 앞으로 예정된 미확인 일정은 없어요.").font(.subheadline) }
+            if agenda.due > 0 { Text("시간이 된 일정 · \(agenda.due)개 확인 전").font(.subheadline).foregroundStyle(.secondary) }
+            Text("요약은 검색·필터와 관계없이 오늘 전체 일정 기준이에요. 알림을 끈 일정도 포함합니다.").font(.caption).foregroundStyle(.secondary)
             Text("확인 기록 기준입니다. 미확인은 미복용을 뜻하지 않으며, 지난 시간의 약을 추가로 복용하라는 안내가 아닙니다.").font(.caption).foregroundStyle(.secondary)
         }.careCard().accessibilityIdentifier("medication-today-progress")
     }
