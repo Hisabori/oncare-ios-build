@@ -38,8 +38,11 @@ struct AppleHealthType: Identifiable {
         if #available(iOS 18.0, *) { items.append(AppleHealthType(id: "StateOfMindRecord", title: "마음 상태·감정", category: "마음", type: HKObjectType.stateOfMindType())) }
         return items
     }
-    func encode(_ sample: HKSample) throws -> HealthRecord {
-        var fields: [String: HealthValue] = ["startTime": .number(sample.startDate.timeIntervalSince1970*1000), "endTime": .number(sample.endDate.timeIntervalSince1970*1000), "sourceName": .text(String(sample.sourceRevision.source.name.prefix(100))), "metadata": .object(["dataOrigin": .object(["packageName": .text(String(sample.sourceRevision.source.bundleIdentifier.prefix(100)))])])]
+    func encode(_ sample: HKSample, sourceName: String? = nil, sourceBundle: String? = nil) throws -> HealthRecord {
+        // Unsaved samples have no sourceRevision. Resolve it only for samples returned by HealthKit.
+        var fields: [String: HealthValue] = ["startTime": .number(sample.startDate.timeIntervalSince1970*1000), "endTime": .number(sample.endDate.timeIntervalSince1970*1000)]
+        if let sourceName { fields["sourceName"] = .text(String(sourceName.prefix(100))) }
+        if let sourceBundle { fields["metadata"] = .object(["dataOrigin": .object(["packageName": .text(String(sourceBundle.prefix(100)))])]) }
         if let value = sample as? HKQuantitySample, let unit {
             let amount = value.quantity.doubleValue(for: unit)
             fields[key] = .number(amount); fields["unit"] = .text(unit.unitString)
@@ -102,7 +105,7 @@ struct AppleHealthType: Identifiable {
                     guard epoch == request else { return }
                     if samples.isEmpty { empty += 1; continue }
                     if samples.count > Self.limit { partial += 1 } else { replace.insert(item.id) }
-                    records += try samples.prefix(Self.limit).map { try item.encode($0) }
+                    records += try samples.prefix(Self.limit).map { try item.encode($0, sourceName: $0.sourceRevision.source.name, sourceBundle: $0.sourceRevision.source.bundleIdentifier) }
                 } catch { errors += 1 }
             }
             var next = journal.state

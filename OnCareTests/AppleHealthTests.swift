@@ -25,7 +25,7 @@ final class AppleHealthTests: XCTestCase {
     func testHealthKitQuantityPreservesUUIDUnitsAndSource() throws {
         let item = try XCTUnwrap(AppleHealthType.all.first { $0.id == "WeightRecord" }), now = Date()
         let sample = HKQuantitySample(type: try XCTUnwrap(HKObjectType.quantityType(forIdentifier: .bodyMass)), quantity: HKQuantity(unit: .gramUnit(with: .kilo), doubleValue: 65), start: now, end: now)
-        let value = try item.encode(sample)
+        let value = try item.encode(sample, sourceName: "Synthetic health", sourceBundle: "example.test")
         XCTAssertEqual(value.id, "hc:apple:" + sample.uuid.uuidString); XCTAssertEqual(value.source, "apple-health"); XCTAssertEqual(value.summaryValue, "65 kg")
         try value.validate(now: now)
     }
