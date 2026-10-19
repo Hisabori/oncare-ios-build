@@ -1,6 +1,6 @@
 name: Build research-capable unsigned IPA
 # Local research weights are added only after this source-only build is tested.
-# Expected installed version: 3.28.0, build 41. Includes Apple Health, mental wellbeing and source identity regression tests.
+# Expected installed version: 3.28.0, build 41. Includes Apple Health, mental wellbeing and source identity and interval boundary regression tests.
 on:
   workflow_dispatch:
   push:
