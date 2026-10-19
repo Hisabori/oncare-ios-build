@@ -50,15 +50,17 @@ targets:
         UIBackgroundModes: [audio]
         NSCameraUsageDescription: Android 온케어의 연결 QR을 읽을 때만 카메라를 사용합니다.
         NSLocalNetworkUsageDescription: 같은 Wi-Fi의 내 Android 온케어에서 건강 기록을 안전하게 가져옵니다.
+        NSHealthShareUsageDescription: 선택한 걸음·운동·수면 단계·심박·신체·수분 기록을 Apple 건강에서 읽어 기기에 표시합니다. 원본에는 쓰지 않습니다.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.oncare.personal
         PRODUCT_NAME: OnCare
+        CODE_SIGN_ENTITLEMENTS: OnCare/OnCare.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MARKETING_VERSION: "3.27.0"
-        CURRENT_PROJECT_VERSION: "40"
+        MARKETING_VERSION: "3.28.0"
+        CURRENT_PROJECT_VERSION: "41"
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: "온케어 3"
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.healthcare-fitness"
@@ -88,8 +90,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.oncare.personal.live
-        MARKETING_VERSION: "3.27.0"
-        CURRENT_PROJECT_VERSION: "40"
+        MARKETING_VERSION: "3.28.0"
+        CURRENT_PROJECT_VERSION: "41"
         GENERATE_INFOPLIST_FILE: "YES"
         APPLICATION_EXTENSION_API_ONLY: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: "온케어 위젯"

@@ -33,7 +33,7 @@ struct HealthAvailability: Codable, Identifiable {
 }
 enum HealthBrowserQuery {
     static func source(_ record: HealthRecord) -> String {
-        var values = [record.source ?? ""]
+        var values = [record.source == "apple-health" ? "Apple 건강" : record.source ?? ""]
         if case .object(let metadata)? = record.fields["metadata"] {
             if case .object(let origin)? = metadata["dataOrigin"], case .text(let app)? = origin["packageName"] { values.append(app == "com.sec.android.app.shealth" ? "삼성 헬스 · " + app : app) }
             if case .object(let device)? = metadata["device"] { for key in ["manufacturer", "model"] { if case .text(let value)? = device[key] { values.append(value) } } }
@@ -64,7 +64,7 @@ struct HealthRecordsView: View {
                 ScrollView(.horizontal, showsIndicators: false) { HStack { ForEach(["전체", "생체", "활동", "신체", "영양", "수면", "주기", "마음", "의료"], id: \.self) { item in Button(item) { category = item }.buttonStyle(.bordered).tint(category == item ? Palette.blue : .gray) } } }
                 Picker("조회 기간", selection: $days) { Text("전체").tag(0); Text("7일").tag(7); Text("30일").tag(30) }.pickerStyle(.segmented).accessibilityIdentifier("health-period-filter")
                 Toggle("즐겨찾기만 보기", isOn: $onlyFavorites).accessibilityIdentifier("health-favorites-only")
-                if records.isEmpty { Label("표시할 기록이 없어요. Android에서 권한과 원본 데이터 공유를 확인해주세요.", systemImage: "heart.text.square").careCard(); Text("검색·기간·즐겨찾기 조건도 확인해보세요.").font(.caption).foregroundStyle(.secondary) }
+                if records.isEmpty { Label("표시할 기록이 없어요. 건강 연결에서 Apple 건강 또는 Android 읽기 권한과 원본 공유를 확인해주세요.", systemImage: "heart.text.square").careCard(); Text("검색·기간·즐겨찾기 조건도 확인해보세요.").font(.caption).foregroundStyle(.secondary) }
                 ForEach(types, id: \.self) { key in
                     let selected = records.filter { $0.recordType == key }
                     if let latest = selected.first {
@@ -107,6 +107,8 @@ extension HealthRecord {
     private func measure(_ key: String, _ unit: String? = nil) -> Double? { guard let value = fields[key] else { return nil }; if let unit, case .object(let object) = value { return scalar(object[unit]) }; return scalar(value) }
     private func metric(_ key: String, _ property: String? = nil, factor: Double = 1, unit: String) -> String? { measure(key, property).map { number($0 * factor) + " " + unit } }
     var summaryValue: String {
+        if source == "apple-health", recordType == "SleepSessionRecord", case .text(let stage)? = fields["stage"] { return stage }
+        if source == "apple-health", recordType == "ExerciseSessionRecord", case .number(let seconds)? = fields["durationSeconds"] { return number(seconds/60) + "분 · 운동" }
         if category == "의료" { return "원본 의료 문서" }
         if recordType == "BloodPressureRecord", let systolic = measure("systolic", "inMillimetersOfMercury"), let diastolic = measure("diastolic", "inMillimetersOfMercury") { return number(systolic) + " / " + number(diastolic) + " mmHg" }
         let value: String?

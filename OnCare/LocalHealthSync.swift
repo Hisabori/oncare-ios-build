@@ -163,6 +163,10 @@ struct HealthConnectionView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("이 iPhone의 건강 정보") {
+                    NavigationLink("Apple 건강·피트니스 연결") { AppleHealthView() }.accessibilityIdentifier("apple-health-open")
+                    Text("iPhone·Apple Watch 기록은 Apple 건강에서 직접 읽고, Android 기록은 아래에서 연결해요.").font(.caption)
+                }
                 Section { Text("Android Health Connect → 같은 Wi-Fi → iPhone\n두 앱을 열어두면 1분마다 최신 기록을 확인해요. 원본에 쓰지 않으며 목표와 루틴은 바꾸지 않아요.") }
                 Section("한 번만 연결") {
                     Text("Android 온케어의 Health Connect · iPhone 연결에서 읽기 권한을 허용하고, 연결 코드를 내 iPhone으로 보내주세요.").font(.subheadline)
@@ -195,7 +199,7 @@ struct HealthConnectionView: View {
                     Text("Wi-Fi 주소가 바뀌면 Android의 연결 코드를 다시 등록하세요. 연결 코드는 암호 키처럼 내 기기에만 전달하세요.").font(.caption)
                     Button("연결 해제", role: .destructive) { disconnecting = true }.disabled(sync.pair == nil).accessibilityIdentifier("sync-disconnect")
                 }
-            }.navigationTitle("Android 건강 연결").navigationBarTitleDisplayMode(.inline)
+            }.navigationTitle("건강 연결").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) { Button("닫기") { dismiss() } }
                     ToolbarItem(placement: .confirmationAction) { Button("기기 연결") { connect() }.disabled(sync.busy || code.isEmpty).accessibilityIdentifier("sync-connect") }

@@ -205,7 +205,7 @@ struct Dashboard: View {
                     VStack(alignment: .leading, spacing: 14) {
                         Text("나의 주간 리포트").font(.title3.bold()); Text("운동·마음·수면과 루틴을 지난주와 비교해요.").font(.subheadline).foregroundStyle(.secondary)
                         CareButton(title: "이번 주 돌아보기", filled: true, id: "report-open") { sheet = .report }
-                        CareButton(title: "Android 건강 데이터 연결", id: "health-sync-open") { sheet = .healthConnection }
+                        CareButton(title: "Apple 건강 · Android 건강 연결", id: "health-sync-open") { sheet = .healthConnection }
                         CareButton(title: "위젯 설치 확인", id: "widget-help-open") { sheet = .widgetHelp }
                         CareButton(title: "앱 환경설정", id: "app-preferences-open") { sheet = .preferences }
                         CareButton(title: "하루 기록 알림 설정", id: "reminders-open") { sheet = .reminders }
