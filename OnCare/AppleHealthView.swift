@@ -3,7 +3,7 @@ import SwiftUI
 struct AppleHealthView: View {
     @EnvironmentObject private var journal: Journal
     @StateObject private var health = AppleHealthStore()
-    @State private var selected: Set<String> = ["StepsRecord", "ExerciseSessionRecord", "SleepSessionRecord", "HeartRateRecord", "WeightRecord"]
+    @State private var selected: Set<String> = ["StepsRecord", "ExerciseSessionRecord", "SleepSessionRecord", "HeartRateRecord", "WeightRecord", "MindfulnessSessionRecord", "StateOfMindRecord"]
     @State private var days = 7
     @State private var deleting = false
     @Environment(\.scenePhase) private var phase
@@ -23,7 +23,8 @@ struct AppleHealthView: View {
                 NavigationLink("연결된 건강 정보 보기") { HealthRecordsView() }
             }
             Section("측정값 그대로 확인해요") {
-                Text("종류별 최근 최대 800개를 읽으며 일부만 조회하면 이전 기록을 덮어 지우지 않습니다. 수면 단계는 원본 값만 표시하고, 여러 앱의 겹치는 기록을 합산하거나 수면 점수를 만들지 않아요. 오늘 요약·직접 입력 기록과는 별도 보관합니다.").font(.caption)
+                Text("종류별 최근 최대 600개를 읽으며 일부만 조회하면 이전 기록을 덮어 지우지 않습니다. 수면 단계는 원본 값만 표시하고, 여러 앱의 겹치는 기록을 합산하거나 수면 점수를 만들지 않아요. 오늘 요약·직접 입력 기록과는 별도 보관합니다.").font(.caption)
+                Text("마음 상태는 iOS 18 이상에서 원본 감정가·순간/하루 구분·감정 및 관련 요인 코드를 읽어요. 마음챙김 시간도 별도 표시합니다. 진단이나 5점 마음 점수로 바꾸지 않으며, AI 회고 입력에 넣지 않습니다.").font(.caption)
                 Text("권한을 끄거나 원본 기록을 모두 지워 빈 결과가 되어도 기존 보관 자료는 자동 삭제하지 않아요. 아래 버튼으로 Apple 건강에서 받은 자료만 지울 수 있습니다.").font(.caption)
                 Button("Apple 건강 보관 자료 지우기", role: .destructive) { deleting = true }.disabled(health.busy)
             }

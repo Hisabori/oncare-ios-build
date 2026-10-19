@@ -34,4 +34,19 @@ final class AppleHealthTests: XCTestCase {
         let sample = HKCategorySample(type: try XCTUnwrap(HKObjectType.categoryType(forIdentifier: .sleepAnalysis)), value: HKCategoryValueSleepAnalysis.asleepREM.rawValue, start: now.addingTimeInterval(-600), end: now)
         XCTAssertEqual(try item.encode(sample).fields["stage"], .text("REM 수면"))
     }
+    func testMindfulnessIsNotEncodedAsSleepStage() throws {
+        let item = try XCTUnwrap(AppleHealthType.all.first { $0.id == "MindfulnessSessionRecord" }), now = Date()
+        let sample = HKCategorySample(type: try XCTUnwrap(HKObjectType.categoryType(forIdentifier: .mindfulSession)), value: 0, start: now.addingTimeInterval(-300), end: now)
+        let record = try item.encode(sample)
+        XCTAssertNil(record.fields["stage"]); XCTAssertEqual(record.fields["durationSeconds"], .number(300)); XCTAssertEqual(record.category, "마음")
+    }
+    func testStateOfMindKeepsOriginalValenceWithoutCreatingScore() throws {
+        if #available(iOS 18.0, *) {
+            let item = try XCTUnwrap(AppleHealthType.all.first { $0.id == "StateOfMindRecord" }), now = Date()
+            let sample = HKStateOfMind(date: now, kind: .dailyMood, valence: -0.25, labels: [.calm], associations: [])
+            let record = try item.encode(sample)
+            XCTAssertEqual(record.fields["valence"], .number(-0.25)); XCTAssertEqual(record.fields["kind"], .text("하루의 기분")); XCTAssertNil(record.fields["score"])
+            try record.validate(now: now)
+        }
+    }
 }

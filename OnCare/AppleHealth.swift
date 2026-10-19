@@ -34,6 +34,8 @@ struct AppleHealthType: Identifiable {
         add(.dietaryWater, "HydrationRecord", "수분", "영양", .literUnit(with: .milli), "volumeMl")
         if let type = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) { items.append(AppleHealthType(id: "SleepSessionRecord", title: "수면·단계", category: "수면", type: type)) }
         items.append(AppleHealthType(id: "ExerciseSessionRecord", title: "운동", category: "활동", type: HKObjectType.workoutType()))
+        if let type = HKObjectType.categoryType(forIdentifier: .mindfulSession) { items.append(AppleHealthType(id: "MindfulnessSessionRecord", title: "마음챙김 시간", category: "마음", type: type)) }
+        if #available(iOS 18.0, *) { items.append(AppleHealthType(id: "StateOfMindRecord", title: "마음 상태·감정", category: "마음", type: HKObjectType.stateOfMindType())) }
         return items
     }
     func encode(_ sample: HKSample) throws -> HealthRecord {
@@ -52,9 +54,17 @@ struct AppleHealthType: Identifiable {
             default: break
             }
         }
-        if let value = sample as? HKCategorySample {
+        if id == "SleepSessionRecord", let value = sample as? HKCategorySample {
             let labels = [0: "침대에 있음", 1: "수면·단계 미분류", 2: "깨어 있음", 3: "코어 수면", 4: "깊은 수면", 5: "REM 수면"]
             fields["stage"] = .text(labels[value.value] ?? "알 수 없는 단계"); fields["stageCode"] = .number(Double(value.value))
+        }
+        if id == "MindfulnessSessionRecord" { fields["durationSeconds"] = .number(sample.endDate.timeIntervalSince(sample.startDate)) }
+        if #available(iOS 18.0, *), let mood = sample as? HKStateOfMind {
+            fields["valence"] = .number(mood.valence)
+            fields["kind"] = .text(mood.kind == .dailyMood ? "하루의 기분" : mood.kind == .momentaryEmotion ? "순간의 감정" : "종류 확인 필요")
+            fields["kindCode"] = .number(Double(mood.kind.rawValue))
+            fields["labelCodes"] = .array(mood.labels.map { .number(Double($0.rawValue)) })
+            fields["associationCodes"] = .array(mood.associations.map { .number(Double($0.rawValue)) })
         }
         if let workout = sample as? HKWorkout { fields["durationSeconds"] = .number(workout.duration); fields["activityType"] = .number(Double(workout.workoutActivityType.rawValue)) }
         return HealthRecord(id: "hc:apple:" + sample.uuid.uuidString, recordType: id, date: sample.endDate, title: title, category: category, fields: fields, source: "apple-health")
@@ -67,7 +77,7 @@ struct AppleHealthType: Identifiable {
     private let store = HKHealthStore()
     private var epoch = 0
     func cancel() { epoch += 1; busy = false; status = "결과 반영을 취소했어요. 기존 기록은 유지됩니다." }
-    static let limit = 800
+    static let limit = 600
     func update(_ journal: Journal, selected: Set<String>, days: Int, authorize: Bool) async {
         guard !busy else { return }
         guard HKHealthStore.isHealthDataAvailable() else { status = "이 기기에서 Apple 건강을 사용할 수 없어요."; return }

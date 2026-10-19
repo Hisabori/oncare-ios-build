@@ -50,7 +50,7 @@ targets:
         UIBackgroundModes: [audio]
         NSCameraUsageDescription: Android 온케어의 연결 QR을 읽을 때만 카메라를 사용합니다.
         NSLocalNetworkUsageDescription: 같은 Wi-Fi의 내 Android 온케어에서 건강 기록을 안전하게 가져옵니다.
-        NSHealthShareUsageDescription: 선택한 걸음·운동·수면 단계·심박·신체·수분 기록을 Apple 건강에서 읽어 기기에 표시합니다. 원본에는 쓰지 않습니다.
+        NSHealthShareUsageDescription: 선택한 걸음·운동·수면 단계·심박·신체·수분·마음 상태·마음챙김 기록을 Apple 건강에서 읽어 기기에 표시합니다. 원본에는 쓰지 않습니다.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     settings:
