@@ -97,7 +97,8 @@ struct AppleHealthType: Identifiable {
                 guard epoch == request else { return }
                 do {
                     let samples: [HKSample] = try await withCheckedThrowingContinuation { continuation in
-                        let query = HKSampleQuery(sampleType: item.type, predicate: HKQuery.predicateForSamples(withStart: start, end: now, options: [.strictStartDate, .strictEndDate]), limit: Self.limit + 1, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]) { _, samples, error in
+                        // Include intervals crossing the first midnight: archives are refreshed by end date.
+                        let query = HKSampleQuery(sampleType: item.type, predicate: HKQuery.predicateForSamples(withStart: start, end: now, options: [.strictEndDate]), limit: Self.limit + 1, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]) { _, samples, error in
                             if let error { continuation.resume(throwing: error) } else { continuation.resume(returning: samples ?? []) }
                         }
                         store.execute(query)
